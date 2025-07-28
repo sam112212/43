@@ -5,22 +5,8 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-// يجب أن يكون لديك هذا الإعداد
-const io = require('socket.io')(server, {
-  cors: {
-    origin: "*", // أو تحديد النطاق الخاص بك
-    methods: ["GET", "POST"]
-  }
-});
-
-// تأكد من أنك تتعامل مع اتصالات Socket.io بشكل صحيح
-io.on('connection', (socket) => {
-  console.log('New user connected');
-  
-  socket.on('chat message', (msg) => {
-    io.emit('chat message', msg); // إرسال للجميع
-  });
-});
+const server = http.createServer(app);
+const io = socketIo(server);
 
 // إعدادات الملفات الثابتة
 app.use(express.static(path.join(__dirname, 'public')));
@@ -129,33 +115,21 @@ io.on('connection', (socket) => {
   console.log('New user connected');
   
   socket.on('login', (userData) => {
-  const user = {
-    id: socket.id,
-    username: userData.username,
-    isAdmin: userData.isAdmin || false,
-    color: userData.color || 'default'
-  };
-
-  users.push(user);
-  socket.emit('login', {
-    username: enteredUsername,
-  isAdmin: false,
-  color: 'green' // أو أي لون من اختيارك
+ socket.on("get-role-permissions", () => {
+  socket.emit("role-permissions-data", adminSettings.permissions);
 });
+
+socket.on("update-role-permissions", (data) => {
+  adminSettings.permissions = data;
   saveData();
-
-  // نقل الأحداث داخل الاتصال الرئيسي
-  socket.on("get-role-permissions", () => {
-    socket.emit("role-permissions-data", adminSettings.permissions);
-  });
-
-  socket.on("update-role-permissions", (data) => {
-    adminSettings.permissions = data;
-    saveData();
-    io.emit("role-permissions-data", adminSettings.permissions);
-  });
+  io.emit("role-permissions-data", adminSettings.permissions); // لتحديث الجميع
 });
-
+    
+    users.push(user);
+    socket.emit('login-success', user);
+    io.emit('user-list-update', users);
+    saveData();
+  });
   
   socket.on('disconnect', () => {
     users = users.filter(user => user.id !== socket.id);
@@ -164,14 +138,10 @@ io.on('connection', (socket) => {
   });
   
   socket.on('send-message', (message) => {
-    const sender = users.find(u => u.id === socket.id);
-const newMessage = {
-  id: Date.now().toString(),
-  text: message.text,
-  username: sender ? sender.username : 'مجهول',
-  timestamp: new Date().toISOString()
-};
-
+    const newMessage = {
+      id: Date.now().toString(),
+      ...message,
+      timestamp: new Date().toISOString()
     };
     
     messages.push(newMessage);
