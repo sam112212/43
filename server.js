@@ -5,8 +5,22 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
+// يجب أن يكون لديك هذا الإعداد
+const io = require('socket.io')(server, {
+  cors: {
+    origin: "*", // أو تحديد النطاق الخاص بك
+    methods: ["GET", "POST"]
+  }
+});
+
+// تأكد من أنك تتعامل مع اتصالات Socket.io بشكل صحيح
+io.on('connection', (socket) => {
+  console.log('New user connected');
+  
+  socket.on('chat message', (msg) => {
+    io.emit('chat message', msg); // إرسال للجميع
+  });
+});
 
 // إعدادات الملفات الثابتة
 app.use(express.static(path.join(__dirname, 'public')));
@@ -123,8 +137,11 @@ io.on('connection', (socket) => {
   };
 
   users.push(user);
-  socket.emit('login-success', user);
-  io.emit('user-list-update', users);
+  socket.emit('login', {
+    username: enteredUsername,
+  isAdmin: false,
+  color: 'green' // أو أي لون من اختيارك
+});
   saveData();
 
   // نقل الأحداث داخل الاتصال الرئيسي
@@ -147,10 +164,14 @@ io.on('connection', (socket) => {
   });
   
   socket.on('send-message', (message) => {
-    const newMessage = {
-      id: Date.now().toString(),
-      ...message,
-      timestamp: new Date().toISOString()
+    const sender = users.find(u => u.id === socket.id);
+const newMessage = {
+  id: Date.now().toString(),
+  text: message.text,
+  username: sender ? sender.username : 'مجهول',
+  timestamp: new Date().toISOString()
+};
+
     };
     
     messages.push(newMessage);
