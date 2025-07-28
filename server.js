@@ -1,24 +1,26 @@
 const express = require('express');
 const http = require('http');
-const socketIo = require('socket.io');
 const path = require('path');
 const fs = require('fs');
-
 const app = express();
+
+// إنشاء السيرفر أولاً
+const server = http.createServer(app);
+
+// ثم إعداد Socket.io مع CORS
 const io = require('socket.io')(server, {
   cors: {
-    origin: "*", // أو حدد نطاق موقعك فقط لأمان أكثر
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
 
-
-// إعدادات الملفات الثابتة
+// ملفات ثابتة
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// متغيرات التخزين
+// متغيرات التطبيق
 let users = [];
 let messages = [];
 let adminSettings = {
@@ -30,7 +32,7 @@ let adminSettings = {
   admins: []
 };
 
-// تحميل البيانات المحفوظة
+// تحميل البيانات
 function loadData() {
   try {
     const data = fs.readFileSync('data.json', 'utf8');
@@ -53,36 +55,27 @@ function saveData() {
   fs.writeFileSync('data.json', JSON.stringify(data), 'utf8');
 }
 
-// تحميل البيانات عند التشغيل
 loadData();
 
-// الصفحة الرئيسية
+// المسارات
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
-// صفحة الدردشة
 app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
-
-// صفحة إدارة الصلاحيات
 app.get('/admin-permissions', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-permissions.html'));
 });
 
-// API لإدارة الأدمنية
-app.get('/api/admins', (req, res) => {
-  res.json(adminSettings.admins);
-});
+// APIs
+app.get('/api/admins', (req, res) => res.json(adminSettings.admins));
 
 app.post('/api/admins', (req, res) => {
   const { username, password, color } = req.body;
-  
-  if (!username || !password || !color) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-  
+  if (!username || !password || !color)
+    return res.status(400).json({ error: 'Missing fields' });
+
   const newAdmin = {
     id: Date.now().toString(),
     username,
@@ -90,10 +83,9 @@ app.post('/api/admins', (req, res) => {
     color,
     createdAt: new Date().toISOString()
   };
-  
+
   adminSettings.admins.push(newAdmin);
   saveData();
-  
   res.json(newAdmin);
 });
 
@@ -104,7 +96,6 @@ app.delete('/api/admins/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// API لإعدادات الإشعارات
 app.get('/api/notifications', (req, res) => {
   res.json(adminSettings.notifications || {});
 });
@@ -115,59 +106,58 @@ app.post('/api/notifications', (req, res) => {
   res.json(adminSettings.notifications);
 });
 
-// اتصالات Socket.io
+// Socket.io
 io.on('connection', (socket) => {
   console.log('New user connected');
-  
-  socket.on('login', (userData) => {
- socket.on("get-role-permissions", () => {
-  socket.emit("role-permissions-data", adminSettings.permissions);
-});
 
-socket.on("update-role-permissions", (data) => {
-  adminSettings.permissions = data;
-  saveData();
-  io.emit("role-permissions-data", adminSettings.permissions); // لتحديث الجميع
-});
-    
+  socket.on("get-role-permissions", () => {
+    socket.emit("role-permissions-data", adminSettings.permissions);
+  });
+
+  socket.on("update-role-permissions", (data) => {
+    adminSettings.permissions = data;
+    saveData();
+    io.emit("role-permissions-data", adminSettings.permissions);
+  });
+
+  socket.on('login', (user) => {
+    user.id = socket.id;
     users.push(user);
     socket.emit('login-success', user);
     io.emit('user-list-update', users);
     saveData();
   });
-  
+
   socket.on('disconnect', () => {
-    users = users.filter(user => user.id !== socket.id);
+    users = users.filter(u => u.id !== socket.id);
     io.emit('user-list-update', users);
     saveData();
   });
-  
+
   socket.on('send-message', (message) => {
     const newMessage = {
       id: Date.now().toString(),
       ...message,
       timestamp: new Date().toISOString()
     };
-    
     messages.push(newMessage);
     io.emit('new-message', newMessage);
     saveData();
   });
-  
+
   socket.on('admin-action', (action) => {
-    const admin = users.find(user => user.id === socket.id && user.isAdmin);
+    const admin = users.find(u => u.id === socket.id && u.isAdmin);
     if (!admin) return;
-    
+
     io.emit('admin-action-performed', {
       ...action,
       admin: admin.username
     });
-    
-    // تطبيق العقوبة على المستخدم
+
     if (action.type === 'ban') {
-      users = users.filter(user => user.id !== action.userId);
+      users = users.filter(u => u.id !== action.userId);
     }
-    
+
     io.emit('user-list-update', users);
     saveData();
   });
@@ -176,5 +166,5 @@ socket.on("update-role-permissions", (data) => {
 // تشغيل السيرفر
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
