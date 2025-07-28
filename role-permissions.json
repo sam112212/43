@@ -1,0 +1,23 @@
+{
+  "admin": [
+    "ban",
+    "kick",
+    "mute",
+    "delete_messages",
+    "assign_roles",
+    "view_admin_panel"
+  ],
+  "member": [
+    "send_messages",
+    "edit_own_messages",
+    "change_status",
+    "use_emoji"
+  ],
+  "guest": [
+    "send_messages",
+    "change_status"
+  ],
+  "restricted": [
+    "read_messages"
+  ]
+}

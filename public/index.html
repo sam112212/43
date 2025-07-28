@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>دخول الدردشة</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #1e1e2f, #121212);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-box {
+      background: #222;
+      padding: 30px;
+      border-radius: 20px;
+      width: 350px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #444;
+      margin: 0 auto 20px;
+      font-size: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+    .emoji-picker {
+      display: none;
+      background: #333;
+      border-radius: 10px;
+      padding: 10px;
+      margin: 10px 0;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+    }
+    .emoji-option {
+      font-size: 24px;
+      cursor: pointer;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      background: #333;
+      color: white;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background: #00b894;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .role-options {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+    }
+    .role-options label {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <div class="avatar" id="avatarDisplay">😀</div>
+
+    <div class="emoji-picker" id="emojiPicker">
+      <span class="emoji-option">😀</span><span class="emoji-option">👩</span>
+      <span class="emoji-option">🧔</span><span class="emoji-option">👵</span>
+      <span class="emoji-option">👶</span><span class="emoji-option">❤️</span>
+      <span class="emoji-option">💔</span><span class="emoji-option">🌟</span>
+      <span class="emoji-option">🎉</span><span class="emoji-option">📌</span>
+    </div>
+
+    <input type="text" id="username" placeholder="ادخل اسمك">
+
+    <div class="role-options">
+      <label><input type="radio" name="role" value="guest" checked> زائر</label>
+      <label><input type="radio" name="role" value="member"> عضو</label>
+      <label><input type="radio" name="role" value="admin"> أدمن</label>
+    </div>
+
+    <input type="password" id="password" placeholder="كلمة المرور" style="display:none;">
+
+    <select id="status">
+      <option value="متاح">🟢 متاح</option>
+      <option value="مشغول">🔴 مشغول</option>
+      <option value="بالخارج">🚪 بالخارج</option>
+      <option value="طعام">🍽️ طعام</option>
+      <option value="هاتف">📱 هاتف</option>
+      <option value="نائم">💤 نائم</option>
+      <option value="سيارة">🚗 سيارة</option>
+    </select>
+
+    <button onclick="enterChat()">🚪 دخول</button>
+  </div>
+
+  <script>
+    const avatarDisplay = document.getElementById('avatarDisplay');
+    const emojiPicker = document.getElementById('emojiPicker');
+    const roleInputs = document.getElementsByName('role');
+    const passwordInput = document.getElementById('password');
+
+    avatarDisplay.addEventListener('click', () => {
+      emojiPicker.style.display = emojiPicker.style.display === 'grid' ? 'none' : 'grid';
+    });
+
+    document.querySelectorAll('.emoji-option').forEach(el => {
+      el.addEventListener('click', () => {
+        avatarDisplay.textContent = el.textContent;
+        emojiPicker.style.display = 'none';
+      });
+    });
+
+    roleInputs.forEach(input => {
+      input.addEventListener('change', () => {
+        passwordInput.style.display = (input.value !== 'guest') ? 'block' : 'none';
+      });
+    });
+
+    function enterChat() {
+      const name = document.getElementById('username').value.trim();
+      const avatar = avatarDisplay.textContent;
+      const role = document.querySelector('input[name="role"]:checked').value;
+      const status = document.getElementById('status').value;
+      const password = document.getElementById('password').value;
+
+      if (!name) {
+        alert("يرجى إدخال اسمك");
+        return;
+      }
+
+      localStorage.setItem("name", name);
+      localStorage.setItem("avatar", avatar);
+      localStorage.setItem("role", role);
+      localStorage.setItem("status", status);
+      if (role !== "guest") localStorage.setItem("password", password);
+
+      window.location.href = "chat.html";
+    }
+  </script>
+</body>
+</html>

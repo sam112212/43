@@ -1,0 +1,3696 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>غرفة الدردشة</title>
+  <style>
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2c3e50;
+      --bg-color: #f5f7fa;
+      --sidebar-color: #2c3e50;
+      --chat-bg: #ffffff;
+      --text-color: #333333;
+      --input-bg: #ffffff;
+      --border-color: #e0e0e0;
+      --message-bg: #e9ebee;
+      --settings-menu-bg: #ffffff;
+      --online-count-color: #bdc3c7;
+      --available-color: #2ecc71;
+      --away-color: #f1c40f;
+      --busy-color: #e74c3c;
+      --admin-red: #e74c3c;
+      --admin-green: #2ecc71;
+      --admin-purple: #9b59b6;
+    }
+
+    /* الوضع المظلم */
+    .dark-mode {
+      --primary-color: #2980b9;
+      --secondary-color: #1a1a1a;
+      --bg-color: #121212;
+      --sidebar-color: #1a1a1a;
+      --chat-bg: #1e1e1e;
+      --text-color: #e0e0e0;
+      --input-bg: #2d2d2d;
+      --border-color: #333333;
+      --message-bg: #2d2d2d;
+      --settings-menu-bg: #2d2d2d;
+      --online-count-color: #7f8c8d;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: all 0.3s ease;
+    }
+    
+    #app {
+      display: flex;
+      height: 100vh;
+    }
+    
+    /* تصميم القائمة الجانبية */
+    #sidebar {
+      width: 300px;
+      background-color: var(--sidebar-color);
+      color: white;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border-color);
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+    
+    /* مستطيل المتحدث الحالي */
+    #speaker-container {
+      background-color: var(--secondary-color);
+      padding: 15px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #current-speaker {
+      font-weight: bold;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+    }
+    .mic-icon {
+      margin-right: 10px;
+      color: var(--primary-color);
+    }
+    #speaker-timer {
+      color: var(--online-count-color);
+      font-size: 14px;
+    }
+    
+    /* عنوان المتواجدون */
+    #online-header {
+      padding: 15px;
+      background-color: var(--sidebar-color);
+      border-bottom: 1px solid var(--border-color);
+      font-size: 18px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #online-count {
+      font-size: 14px;
+      color: var(--online-count-color);
+    }
+    
+    /* قائمة المتواجدين */
+    #user-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .user-item {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+      position: relative;
+      cursor: pointer;
+    }
+    .user-item:hover {
+      background-color: rgba(52, 152, 219, 0.1);
+      transform: translateX(-5px);
+    }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 10px;
+      font-size: 16px;
+      color: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      position: relative;
+    }
+    .user-status-dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      bottom: -2px;
+      right: -2px;
+      border: 2px solid var(--sidebar-color);
+    }
+    .available {
+      background-color: var(--available-color);
+      box-shadow: 0 0 5px var(--available-color);
+    }
+    .away {
+      background-color: var(--away-color);
+      box-shadow: 0 0 5px var(--away-color);
+    }
+    .busy {
+      background-color: var(--busy-color);
+      box-shadow: 0 0 5px var(--busy-color);
+    }
+    .user-status-icon {
+      width: 24px;
+      height: 24px;
+      margin-left: 5px;
+      object-fit: contain;
+    }
+    .user-details {
+      flex: 1;
+    }
+    .user-name {
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
+    .user-role {
+      font-size: 12px;
+      color: var(--online-count-color);
+    }
+    .speaking-user {
+      background-color: rgba(52, 152, 219, 0.1);
+      border-right: 3px solid var(--primary-color);
+    }
+    .speaking-user .user-name {
+      color: var(--primary-color);
+    }
+    
+    /* المحتوى الرئيسي */
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--chat-bg);
+      position: relative;
+    }
+    #header {
+      background-color: var(--secondary-color);
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-weight: bold;
+      position: relative;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    /* تحسينات على زر الإعدادات والحالة */
+    #settings-btn, #status-btn {
+      position: absolute;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+    }
+    
+    #settings-btn {
+      left: 15px;
+    }
+    
+    #status-btn {
+      left: 65px;
+    }
+    
+    #settings-btn:hover, #status-btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    /* قائمة الحالة */
+    #status-menu {
+      position: absolute;
+      left: 110px;
+      top: 60px;
+      background: var(--settings-menu-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 0;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+      width: 200px;
+      animation: fadeIn 0.2s ease;
+    }
+    
+    .status-option {
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      color: var(--text-color);
+    }
+    
+    .status-option:hover {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .status-option-icon {
+      width: 20px;
+      height: 20px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    
+    /* قائمة اللغة */
+    #language-menu {
+      position: absolute;
+      right: 15px;
+      top: 60px;
+      background: var(--settings-menu-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 0;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+      width: 150px;
+      animation: fadeIn 0.2s ease;
+    }
+    
+    .language-option {
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-color);
+    }
+    
+    .language-option:hover {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    #chat {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      position: relative;
+      z-index: 1;
+      background-color: var(--chat-bg);
+    }
+    
+    .message-container {
+      margin-bottom: 15px;
+      position: relative;
+    }
+    
+    .message-sender {
+      font-weight: bold;
+      color: var(--primary-color);
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .message {
+      padding: 12px 15px;
+      border-radius: 8px;
+      background-color: var(--message-bg);
+      max-width: 70%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+      border-left: 4px solid var(--primary-color);
+      position: relative;
+      cursor: pointer;
+    }
+    
+    .message:hover {
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+    
+    .message-options {
+      position: absolute;
+      right: -40px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--settings-menu-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      padding: 5px;
+      display: none;
+      z-index: 10;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .message:hover .message-options {
+      display: flex;
+    }
+    
+    .message-option {
+      padding: 5px;
+      cursor: pointer;
+      color: var(--text-color);
+      transition: all 0.2s ease;
+      border-radius: 3px;
+    }
+    
+    .message-option:hover {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .bold-text {
+      font-weight: bold;
+    }
+    
+    /* منطقة الإدخال */
+    #input-area {
+      padding: 15px;
+      background-color: var(--input-bg);
+      display: flex;
+      align-items: center;
+      border-top: 1px solid var(--border-color);
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    
+    #input-tools {
+      display: flex;
+      align-items: center;
+    }
+    
+    #message-input {
+      flex: 1;
+      padding: 12px 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      margin: 0 10px;
+      font-size: 16px;
+      outline: none;
+      transition: all 0.3s ease;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+    }
+    
+    #message-input:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+    
+    .tool-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 8px;
+      color: var(--online-count-color);
+      transition: all 0.3s ease;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .tool-btn:hover {
+      color: var(--primary-color);
+      background-color: rgba(52, 152, 219, 0.1);
+    }
+    
+    .tool-btn.active {
+      color: var(--primary-color);
+      background-color: rgba(52, 152, 219, 0.2);
+    }
+    
+    #bold-btn {
+      font-weight: bold;
+      font-size: 18px;
+    }
+    
+    #dark-mode-btn {
+      position: absolute;
+      right: 15px;
+      font-size: 20px;
+    }
+    
+    #send-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 24px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
+    }
+    
+    #send-btn:hover {
+      background-color: #2980b9;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(52, 152, 219, 0.4);
+    }
+    
+    /* قائمة الإيموجي */
+    #emoji-picker {
+      position: absolute;
+      bottom: 80px;
+      right: 20px;
+      background: var(--settings-menu-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px;
+      width: 320px;
+      display: none;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .emoji-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 10px;
+    }
+    
+    .emoji-tab {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 20px;
+      flex: 1;
+      text-align: center;
+      transition: all 0.2s ease;
+      color: var(--text-color);
+    }
+    
+    .emoji-tab:hover {
+      background-color: rgba(52, 152, 219, 0.1);
+    }
+    
+    .emoji-tab.active {
+      border-bottom: 2px solid var(--primary-color);
+      color: var(--primary-color);
+    }
+    
+    .emoji-category {
+      display: none;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 5px;
+    }
+    
+    .emoji-category.active {
+      display: flex;
+    }
+    
+    .emoji {
+      font-size: 24px;
+      margin: 5px;
+      cursor: pointer;
+      display: inline-block;
+      padding: 5px;
+      transition: all 0.2s ease;
+      border-radius: 4px;
+    }
+    
+    .emoji:hover {
+      transform: scale(1.2);
+      background-color: rgba(52, 152, 219, 0.1);
+    }
+    
+    /* قائمة حجم الخط */
+    #font-size-menu {
+      position: absolute;
+      bottom: 70px;
+      right: 80px;
+      background: var(--settings-menu-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      width: 150px;
+      display: none;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    }
+    
+    .font-size-option {
+      padding: 8px;
+      cursor: pointer;
+      text-align: center;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      color: var(--text-color);
+    }
+    
+    .font-size-option:hover {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    /* قائمة ألوان النص */
+    #color-picker {
+      position: absolute;
+      bottom: 70px;
+      right: 130px;
+      background: var(--settings-menu-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      width: 180px;
+      display: none;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    }
+    
+    .color-options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .color-option {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin: 5px;
+      cursor: pointer;
+      display: inline-block;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+    
+    .color-option:hover {
+      transform: scale(1.1);
+      border-color: var(--primary-color);
+    }
+    
+    /* قائمة الإعدادات */
+    #settings-menu {
+      position: absolute;
+      right: 15px;
+      top: 60px;
+      background: var(--settings-menu-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 0;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+      width: 220px;
+      animation: fadeIn 0.2s ease;
+      opacity: 0.95;
+    }
+    
+    .settings-item {
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      color: var(--text-color);
+    }
+    
+    .settings-item i {
+      margin-left: 10px;
+      width: 20px;
+      text-align: center;
+    }
+    
+    .settings-item:hover {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .admin-only {
+      display: none;
+      border-top: 1px solid var(--border-color);
+      margin-top: 5px;
+      padding-top: 5px;
+    }
+    
+    .is-admin .admin-only {
+      display: block;
+    }
+    
+    /* عنوان الغرفة */
+    .room-title {
+      flex: 1;
+      text-align: center;
+      padding: 0 50px;
+    }
+    
+    /* صفحات الإعدادات */
+    .settings-page {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .settings-content {
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      width: 80%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 20px;
+      box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+    }
+    
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .settings-title {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    
+    .close-settings {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+    
+    /* نافذة الكاميرا */
+    #camera-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.8);
+      z-index: 3000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #camera-content {
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      width: 80%;
+      max-width: 800px;
+      padding: 20px;
+      box-shadow: 0 5px 30px rgba(0,0,0,0.5);
+    }
+    
+    #camera-preview {
+      width: 100%;
+      height: 400px;
+      background-color: #000;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 18px;
+    }
+    
+    #camera-viewers {
+      margin-bottom: 15px;
+    }
+    
+    .viewer-item {
+      display: inline-block;
+      margin-left: 10px;
+      padding: 5px 10px;
+      background-color: var(--message-bg);
+      border-radius: 15px;
+      font-size: 14px;
+    }
+    
+    #camera-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .camera-btn {
+      padding: 8px 15px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    #close-camera {
+      background-color: #e74c3c;
+      color: white;
+    }
+    
+    #kick-viewer {
+      background-color: #f39c12;
+      color: white;
+    }
+    
+    /* زر الكاميرا وإرسال الصورة */
+    .media-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      margin-right: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .media-btn img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+    
+    /* نافذة طلب مشاهدة الكاميرا */
+    #view-request-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 3000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #view-request-content {
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      width: 80%;
+      max-width: 400px;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    #view-request-text {
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+    
+    #view-request-btns {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+    
+    .view-request-btn {
+      padding: 8px 20px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    #accept-view {
+      background-color: #2ecc71;
+      color: white;
+    }
+    
+    #reject-view {
+      background-color: #e74c3c;
+      color: white;
+    }
+    
+    /* رسائل الصور */
+    .image-message {
+      max-width: 300px;
+      max-height: 300px;
+      border-radius: 8px;
+      margin-top: 5px;
+      cursor: pointer;
+    }
+    
+    .image-options {
+      position: absolute;
+      right: -40px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--settings-menu-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      padding: 5px;
+      display: none;
+      z-index: 10;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .image-container:hover .image-options {
+      display: flex;
+    }
+    
+    /* نافذة اختيار الصورة */
+    #image-picker {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 3000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #image-picker-content {
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      padding: 20px;
+      box-shadow: 0 5px 30px rgba(0,0,0,0.5);
+    }
+    
+    #image-gallery {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    
+    .gallery-image {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .gallery-image:hover {
+      transform: scale(1.05);
+    }
+    
+    #image-picker-btns {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    
+    .image-picker-btn {
+      padding: 8px 15px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    #cancel-image {
+      background-color: #e74c3c;
+      color: white;
+    }
+    
+    #send-image {
+      background-color: #2ecc71;
+      color: white;
+    }
+    
+    /* نافذة تأكيد الحذف */
+    #delete-confirm {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 3000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #delete-confirm-content {
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      width: 80%;
+      max-width: 400px;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    #delete-confirm-text {
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+    
+    #delete-confirm-btns {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+    
+    .delete-confirm-btn {
+      padding: 8px 20px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    #confirm-delete {
+      background-color: #e74c3c;
+      color: white;
+    }
+    
+    #cancel-delete {
+      background-color: #bdc3c7;
+      color: #333;
+    }
+
+    /* أنماط جديدة لإرسال الملفات */
+    #file-preview {
+      display: none;
+      margin: 10px 0;
+      padding: 10px;
+      background-color: var(--message-bg);
+      border-radius: 8px;
+      position: relative;
+    }
+
+    #file-preview img {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 5px;
+    }
+
+    #file-preview-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+      gap: 10px;
+    }
+
+    .file-action-btn {
+      padding: 5px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #send-file-btn {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    #cancel-file-btn {
+      background-color: #e74c3c;
+      color: white;
+    }
+
+    #file-input {
+      display: none;
+    }
+
+    /* معاينة الرد */
+    #reply-preview {
+      display: none;
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: var(--message-bg);
+      border-radius: 8px;
+      position: relative;
+    }
+
+    .reply-container {
+      position: relative;
+    }
+
+    .reply-sender {
+      font-weight: bold;
+      color: var(--primary-color);
+      margin-bottom: 5px;
+    }
+
+    .reply-text {
+      color: var(--text-color);
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .clear-reply {
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--primary-color);
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    /* أيقونة الكاميرا بجانب اسم العضو */
+    .camera-icon {
+      width: 16px;
+      height: 16px;
+      margin-right: 5px;
+    }
+
+    /* زر مشاهدة الكاميرا */
+    .view-camera-btn {
+      position: absolute;
+      left: -30px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      display: none;
+    }
+
+    .user-item:hover .view-camera-btn {
+      display: block;
+    }
+
+    /* نافذة تغيير اللغة */
+    #language-settings {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #language-content {
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      width: 80%;
+      max-width: 400px;
+      padding: 20px;
+    }
+
+    #language-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .language-option-btn {
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid var(--border-color);
+      background-color: var(--input-bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .language-option-btn.selected {
+      border-color: var(--primary-color);
+      background-color: rgba(52, 152, 219, 0.1);
+    }
+
+    .language-flag {
+      width: 24px;
+      height: 16px;
+      margin-left: 10px;
+    }
+
+    #save-language {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    /* قائمة المستخدم */
+    .user-menu {
+      position: absolute;
+      left: 0;
+      top: 100%;
+      background: var(--settings-menu-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 0;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+      width: 200px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .user-menu-item {
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-color);
+    }
+
+    .user-menu-item:hover {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    /* نافذة المحادثة الخاصة */
+    #private-chat {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 300px;
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+      display: none;
+      flex-direction: column;
+      z-index: 1000;
+    }
+
+    #private-chat-header {
+      padding: 10px 15px;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 10px 10px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #private-chat-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    #private-chat-messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      max-height: 300px;
+    }
+
+    #private-chat-input {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    #private-message-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      outline: none;
+    }
+
+    #private-send-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 15px;
+      margin-right: 5px;
+      cursor: pointer;
+    }
+
+    /* نافذة مشاهدة الكاميرا */
+    #view-camera-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.8);
+      z-index: 3000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #view-camera-content {
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      width: 80%;
+      max-width: 800px;
+      padding: 20px;
+      box-shadow: 0 5px 30px rgba(0,0,0,0.5);
+    }
+
+    #view-camera-preview {
+      width: 100%;
+      height: 400px;
+      background-color: #000;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 18px;
+    }
+
+    #view-camera-close {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 15px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* رسائل تم تجاهلها */
+    .ignored-message {
+      display: none;
+    }
+    
+    /* نافذة إعدادات الإشعارات */
+    #notifications-settings {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #notifications-content {
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      width: 80%;
+      max-width: 500px;
+      padding: 20px;
+      box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+    }
+    
+    .notification-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .notification-label {
+      font-size: 16px;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: var(--primary-color);
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    /* نافذة إدارة الأدمنية */
+    #admin-management {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #admin-content {
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 20px;
+      box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+    }
+    
+    .admin-list {
+      margin: 20px 0;
+    }
+    
+    .admin-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .admin-info {
+      display: flex;
+      align-items: center;
+    }
+    
+    .admin-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      margin-left: 10px;
+    }
+    
+    .admin-actions button {
+      padding: 5px 10px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .edit-admin {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .remove-admin {
+      background-color: #e74c3c;
+      color: white;
+    }
+    
+    .add-admin-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 15px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    
+    /* نافذة إضافة/تعديل أدمن */
+    #admin-form-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #admin-form-content {
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      width: 80%;
+      max-width: 500px;
+      padding: 20px;
+      box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+    }
+    
+    .color-options-container {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    
+    .color-option-admin {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+    
+    .color-option-admin.selected {
+      border-color: var(--text-color);
+    }
+    
+    .permission-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0;
+    }
+    
+    .form-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .form-buttons button {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .save-admin {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .cancel-admin {
+      background-color: #bdc3c7;
+      color: #333;
+    }
+    
+    /* سجلات الدخول والحظر */
+    #logs-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #logs-content {
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 20px;
+      box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+    }
+    
+    .log-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 15px;
+    }
+    
+    .log-tab {
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    
+    .log-tab.active {
+      border-bottom: 2px solid var(--primary-color);
+      color: var(--primary-color);
+    }
+    
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .log-table th, .log-table td {
+      padding: 10px;
+      text-align: right;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .log-table th {
+      background-color: rgba(52, 152, 219, 0.1);
+    }
+    
+    .unban-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    
+    /* ألوان الأدمنية */
+    .admin-red {
+      background-color: var(--admin-red);
+    }
+    
+    .admin-green {
+      background-color: var(--admin-green);
+    }
+    
+    .admin-purple {
+      background-color: var(--admin-purple);
+    }
+    
+    /* أدوات الأدمن في قائمة المستخدمين */
+    .admin-tools {
+      display: none;
+    }
+    
+    .admin-tools.show {
+      display: block;
+    }
+    
+    .admin-action-btn {
+      padding: 5px 10px;
+      margin: 2px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    .kick-btn {
+      background-color: #f39c12;
+      color: white;
+    }
+    
+    .ban-btn {
+      background-color: #e74c3c;
+      color: white;
+    }
+    
+    .mute-btn {
+      background-color: #95a5a6;
+      color: white;
+    }
+    
+    .mic-off-btn {
+      background-color: #9b59b6;
+      color: white;
+    }
+    
+    .camera-off-btn {
+      background-color: #34495e;
+      color: white;
+    }
+    
+    .details-btn {
+      background-color: #3498db;
+      color: white;
+    }
+    
+    /* نافذة تفاصيل العضو */
+    #user-details-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #user-details-content {
+      background-color: var(--settings-menu-bg);
+      border-radius: 10px;
+      width: 80%;
+      max-width: 500px;
+      padding: 20px;
+      box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+    }
+    
+    .user-details-row {
+      display: flex;
+      margin-bottom: 10px;
+    }
+    
+    .user-details-label {
+      font-weight: bold;
+      width: 120px;
+    }
+    
+    .user-details-value {
+      flex: 1;
+    }
+    
+    .close-details {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 15px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- القائمة الجانبية -->
+    <div id="sidebar">
+      <!-- مستطيل المتحدث الحالي -->
+      <div id="speaker-container">
+        <div id="current-speaker">
+          <span class="mic-icon">🎤</span>
+          <span id="speaker-name">لا يوجد متحدث</span>
+        </div>
+        <div id="speaker-timer">05:00</div>
+      </div>
+      
+      <!-- عنوان المتواجدون -->
+      <div id="online-header">
+        <span>المتواجدون</span>
+        <span id="online-count">(2)</span>
+      </div>
+      
+      <!-- قائمة المتواجدين -->
+      <ul id="user-list">
+        <li class="user-item speaking-user" data-user-id="1">
+          <div class="user-avatar">م
+            <div class="user-status-dot available"></div>
+          </div>
+          <div class="user-details">
+            <div class="user-name">
+              <img src="https://ta-taksi.com/wp-content/uploads/2025/07/CAM-VID.png" class="camera-icon" alt="كاميرا">
+              محمد
+              <img src="https://ta-taksi.com/wp-content/uploads/2025/07/متاح.png" class="user-status-icon" alt="متاح">
+            </div>
+            <div class="user-role">مدير</div>
+          </div>
+          <button class="view-camera-btn">مشاهدة</button>
+          <div class="user-menu">
+            <div class="user-menu-item view-camera-menu">مشاهدة الكاميرا</div>
+            <div class="user-menu-item private-chat-menu">محادثة خاصة</div>
+            <div class="user-menu-item ignore-user-menu">تجاهل</div>
+            <div class="admin-tools show">
+              <div class="user-menu-item kick-user-menu">طرد</div>
+              <div class="user-menu-item ban-user-menu">حظر</div>
+              <div class="user-menu-item mute-user-menu">إيقاف الكتابة</div>
+              <div class="user-menu-item mic-off-user-menu">إيقاف المايك</div>
+              <div class="user-menu-item camera-off-user-menu">إيقاف الكاميرا</div>
+              <div class="user-menu-item details-user-menu">تفاصيل</div>
+            </div>
+          </div>
+        </li>
+        <li class="user-item" data-user-id="2">
+          <div class="user-avatar">أ
+            <div class="user-status-dot away"></div>
+          </div>
+          <div class="user-details">
+            <div class="user-name">
+              أحمد
+              <img src="https://ta-taksi.com/wp-content/uploads/2025/07/بالخارج.png" class="user-status-icon" alt="بالخارج">
+            </div>
+            <div class="user-role">عضو</div>
+          </div>
+          <div class="user-menu">
+            <div class="user-menu-item view-camera-menu">مشاهدة الكاميرا</div>
+            <div class="user-menu-item private-chat-menu">محادثة خاصة</div>
+            <div class="user-menu-item ignore-user-menu">تجاهل</div>
+            <div class="admin-tools">
+              <div class="user-menu-item kick-user-menu">طرد</div>
+              <div class="user-menu-item ban-user-menu">حظر</div>
+              <div class="user-menu-item mute-user-menu">إيقاف الكتابة</div>
+              <div class="user-menu-item mic-off-user-menu">إيقاف المايك</div>
+              <div class="user-menu-item camera-off-user-menu">إيقاف الكاميرا</div>
+              <div class="user-menu-item details-user-menu">تفاصيل</div>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div id="main">
+      <!-- الشريط العلوي -->
+      <div id="header">
+        <button id="status-btn" title="تغيير الحالة">😊</button>
+        <button id="settings-btn" title="الإعدادات">⚙️</button>
+        <span class="room-title">غرفة الدردشة العامة</span>
+        <button id="dark-mode-btn" class="tool-btn" title="الوضع المظلم">🌓</button>
+        <button id="language-btn" class="tool-btn" title="تغيير اللغة">🌐</button>
+        
+        <!-- قائمة الحالة المحدثة مع الأيقونات الجديدة -->
+        <div id="status-menu">
+          <div class="status-option" data-status="available">
+            <img src="https://ta-taksi.com/wp-content/uploads/2025/07/متاح.png" class="status-option-icon" alt="متاح">
+            <span>متاح</span>
+          </div>
+          <div class="status-option" data-status="away">
+            <img src="https://ta-taksi.com/wp-content/uploads/2025/07/بالخارج.png" class="status-option-icon" alt="بالخارج">
+            <span>بالخارج</span>
+          </div>
+          <div class="status-option" data-status="busy">
+            <img src="https://ta-taksi.com/wp-content/uploads/2025/07/مشغول.png" class="status-option-icon" alt="مشغول">
+            <span>مشغول</span>
+          </div>
+          <div class="status-option" data-status="phone">
+            <img src="https://ta-taksi.com/wp-content/uploads/2025/07/1.png" class="status-option-icon" alt="هاتف">
+            <span>هاتف</span>
+          </div>
+          <div class="status-option" data-status="food">
+            <img src="https://ta-taksi.com/wp-content/uploads/2025/07/طعام.png" class="status-option-icon" alt="طعام">
+            <span>طعام</span>
+          </div>
+          <div class="status-option" data-status="sleep">
+            <img src="https://ta-taksi.com/wp-content/uploads/2025/07/نائم.png" class="status-option-icon" alt="نائم">
+            <span>نائم</span>
+          </div>
+          <div class="status-option" data-status="car">
+            <img src="https://ta-taksi.com/wp-content/uploads/2025/07/سيارة.png" class="status-option-icon" alt="سيارة">
+            <span>سيارة</span>
+          </div>
+        </div>
+        
+        <!-- قائمة اللغة -->
+        <div id="language-menu">
+          <div class="language-option" data-lang="ar">العربية</div>
+          <div class="language-option" data-lang="en">English</div>
+        </div>
+        
+        <!-- قائمة الإعدادات -->
+        <div id="settings-menu">
+          <div class="settings-item" id="change-bg-btn"><i>🎨</i> تغيير الخلفية</div>
+          <div class="settings-item" id="notifications-btn"><i>🔔</i> إعدادات الإشعارات</div>
+          <div class="settings-item" id="language-settings-btn"><i>🌐</i> إعدادات اللغة</div>
+          <div class="admin-only">
+            <div class="settings-item" id="admin-management-btn"><i>👑</i> إدارة الأدمنية</div>
+            <div class="settings-item" id="login-log-btn"><i>📝</i> سجل الدخول والخروج</div>
+            <div class="settings-item" id="ban-log-btn"><i>🚫</i> سجل الحظر</div>
+            <div class="settings-item"><i>⚙️</i> لوحة التحكم</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- منطقة المحادثة -->
+      <div id="chat">
+        <div class="message-container" data-sender-id="1">
+          <div class="message-sender">
+            محمد
+          </div>
+          <div class="message">
+            مرحباً بالجميع!
+            <div class="message-options">
+              <span class="message-option" title="نسخ">📋</span>
+              <span class="message-option" title="رد">↩️</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="message-container" data-sender-id="2">
+          <div class="message-sender">
+            أحمد
+          </div>
+          <div class="message bold-text">
+            هذه رسالة بخط غامق
+            <div class="message-options">
+              <span class="message-option" title="نسخ">📋</span>
+              <span class="message-option" title="رد">↩️</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="message-container" data-sender-id="1">
+          <div class="message-sender">
+            محمد
+          </div>
+          <div class="message" style="color: #e74c3c;">
+            هذه رسالة ملونة
+            <div class="message-options">
+              <span class="message-option" title="نسخ">📋</span>
+              <span class="message-option" title="رد">↩️</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- منطقة الإدخال -->
+      <div id="input-area">
+        <div id="reply-preview" style="display: none;">
+          <div class="reply-container">
+            <div class="reply-sender">رد على: محمد</div>
+            <div class="reply-text">مرحباً بالجميع!</div>
+            <div class="clear-reply">مسح الرد</div>
+          </div>
+        </div>
+        
+        <!-- معاينة الملف قبل الإرسال -->
+        <div id="file-preview">
+          <img id="preview-image" src="#" alt="معاينة الصورة">
+          <div id="file-preview-actions">
+            <button id="cancel-file-btn" class="file-action-btn">إلغاء</button>
+            <button id="send-file-btn" class="file-action-btn">إرسال</button>
+          </div>
+        </div>
+        
+        <div id="input-tools">
+          <button id="emoji-btn" class="tool-btn" title="إيموجي">😊</button>
+          <button id="bold-btn" class="tool-btn" title="نص غامق">B</button>
+          <button id="font-size-btn" class="tool-btn" title="حجم الخط">🔠</button>
+          <button id="color-picker-btn" class="tool-btn" title="لون النص">🎨</button>
+          <button id="camera-btn" class="media-btn" title="فتح الكاميرا">
+            <img src="https://ta-taksi.com/wp-content/uploads/2025/07/CAM-VID.png" alt="كاميرا">
+          </button>
+          <button id="image-btn" class="media-btn" title="إرسال صورة">
+            <img src="https://ta-taksi.com/wp-content/uploads/2025/07/SRMT-IMAIGE.png" alt="إرسال صورة">
+          </button>
+        </div>
+        
+        <!-- عنصر إدخال الملف المخفي -->
+        <input type="file" id="file-input" accept="image/*">
+        
+        <input type="text" id="message-input" placeholder="اكتب رسالتك هنا...">
+        <button id="send-btn">إرسال</button>
+        
+        <!-- منبثق الإيموجي -->
+        <div id="emoji-picker">
+          <div class="emoji-tabs">
+            <div class="emoji-tab active" data-tab="recent">🕒 حديث</div>
+            <div class="emoji-tab" data-tab="faces">😀 وجوه</div>
+            <div class="emoji-tab" data-tab="hands">👋 أيدي</div>
+            <div class="emoji-tab" data-tab="hearts">❤️ مشاعر</div>
+            <div class="emoji-tab" data-tab="objects">🎁 أشياء</div>
+          </div>
+          
+          <div id="recent-emoji" class="emoji-category active"></div>
+          
+          <div id="faces-emoji" class="emoji-category">
+            <span class="emoji">😀</span><span class="emoji">😃</span><span class="emoji">😄</span>
+            <span class="emoji">😁</span><span class="emoji">😆</span><span class="emoji">😅</span>
+            <span class="emoji">😂</span><span class="emoji">🤣</span><span class="emoji">😊</span>
+            <span class="emoji">😇</span><span class="emoji">🙂</span><span class="emoji">🙃</span>
+            <span class="emoji">😉</span><span class="emoji">😌</span><span class="emoji">😍</span>
+            <span class="emoji">😘</span><span class="emoji">😗</span><span class="emoji">😙</span>
+            <span class="emoji">😚</span><span class="emoji">😋</span>
+          </div>
+          
+          <div id="hands-emoji" class="emoji-category">
+            <span class="emoji">👋</span><span class="emoji">🤚</span><span class="emoji">🖐️</span>
+            <span class="emoji">✋</span><span class="emoji">🖖</span><span class="emoji">👌</span>
+            <span class="emoji">🤏</span><span class="emoji">✌️</span><span class="emoji">🤞</span>
+            <span class="emoji">🤟</span><span class="emoji">🤘</span><span class="emoji">🤙</span>
+            <span class="emoji">👈</span><span class="emoji">👉</span><span class="emoji">👆</span>
+            <span class="emoji">🖕</span><span class="emoji">👇</span><span class="emoji">☝️</span>
+            <span class="emoji">👍</span><span class="emoji">👎</span>
+          </div>
+          
+          <div id="hearts-emoji" class="emoji-category">
+            <span class="emoji">❤️</span><span class="emoji">🧡</span><span class="emoji">💛</span>
+            <span class="emoji">💚</span><span class="emoji">💙</span><span class="emoji">💜</span>
+            <span class="emoji">🖤</span><span class="emoji">🤍</span><span class="emoji">🤎</span>
+            <span class="emoji">💔</span><span class="emoji">❤️‍🔥</span><span class="emoji">❤️‍🩹</span>
+            <span class="emoji">💕</span><span class="emoji">💞</span><span class="emoji">💓</span>
+            <span class="emoji">💗</span><span class="emoji">💖</span><span class="emoji">💘</span>
+            <span class="emoji">💝</span><span class="emoji">💟</span>
+          </div>
+          
+          <div id="objects-emoji" class="emoji-category">
+            <span class="emoji">🎁</span><span class="emoji">🎈</span><span class="emoji">🎀</span>
+            <span class="emoji">🎊</span><span class="emoji">🎉</span><span class="emoji">🎎</span>
+            <span class="emoji">🏮</span><span class="emoji">🎐</span><span class="emoji">✉️</span>
+            <span class="emoji">📩</span><span class="emoji">📨</span><span class="emoji">💌</span>
+            <span class="emoji">📧</span><span class="emoji">📥</span><span class="emoji">📤</span>
+            <span class="emoji">📦</span><span class="emoji">🏷️</span><span class="emoji">📪</span>
+            <span class="emoji">📫</span><span class="emoji">📬</span>
+          </div>
+        </div>
+        
+        <!-- قائمة حجم الخط -->
+        <div id="font-size-menu">
+          <div class="font-size-option" data-size="14px">صغير (14px)</div>
+          <div class="font-size-option" data-size="16px">متوسط (16px)</div>
+          <div class="font-size-option" data-size="18px">كبير (18px)</div>
+          <div class="font-size-option" data-size="20px">كبير جداً (20px)</div>
+        </div>
+        
+        <!-- قائمة ألوان النص -->
+        <div id="color-picker">
+          <div class="color-options">
+            <div class="color-option" style="background: #000000;" data-color="#000000"></div>
+            <div class="color-option" style="background: #3498db;" data-color="#3498db"></div>
+            <div class="color-option" style="background: #2ecc71;" data-color="#2ecc71"></div>
+            <div class="color-option" style="background: #e74c3c;" data-color="#e74c3c"></div>
+            <div class="color-option" style="background: #9b59b6;" data-color="#9b59b6"></div>
+            <div class="color-option" style="background: #f1c40f;" data-color="#f1c40f"></div>
+            <div class="color-option" style="background: #1abc9c;" data-color="#1abc9c"></div>
+            <div class="color-option" style="background: #e67e22;" data-color="#e67e22"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة الكاميرا -->
+  <div id="camera-modal">
+    <div id="camera-content">
+      <div id="camera-preview">
+        معاينة الكاميرا
+      </div>
+      <div id="camera-viewers">
+        <span>المشاهدون:</span>
+        <span class="viewer-item">أحمد</span>
+      </div>
+      <div id="camera-controls">
+        <button id="close-camera" class="camera-btn">إغلاق الكاميرا</button>
+        <button id="kick-viewer" class="camera-btn">طرد المشاهد</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة طلب مشاهدة الكاميرا -->
+  <div id="view-request-modal">
+    <div id="view-request-content">
+      <div id="view-request-text">
+        أحمد يطلب مشاهدة كاميرتك
+      </div>
+      <div id="view-request-btns">
+        <button id="accept-view" class="view-request-btn">قبول</button>
+        <button id="reject-view" class="view-request-btn">رفض</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة مشاهدة الكاميرا -->
+  <div id="view-camera-modal">
+    <div id="view-camera-content">
+      <div id="view-camera-preview">
+        معاينة كاميرا محمد
+      </div>
+      <button id="view-camera-close">إغلاق</button>
+    </div>
+  </div>
+
+  <!-- نافذة اختيار الصورة -->
+  <div id="image-picker">
+    <div id="image-picker-content">
+      <div id="image-gallery">
+        <img src="https://via.placeholder.com/300x200?text=صورة+1" class="gallery-image" alt="صورة 1">
+        <img src="https://via.placeholder.com/300x200?text=صورة+2" class="gallery-image" alt="صورة 2">
+        <img src="https://via.placeholder.com/300x200?text=صورة+3" class="gallery-image" alt="صورة 3">
+        <img src="https://via.placeholder.com/300x200?text=صورة+4" class="gallery-image" alt="صورة 4">
+        <img src="https://via.placeholder.com/300x200?text=صورة+5" class="gallery-image" alt="صورة 5">
+        <img src="https://via.placeholder.com/300x200?text=صورة+6" class="gallery-image" alt="صورة 6">
+      </div>
+      <div id="image-picker-btns">
+        <button id="cancel-image" class="image-picker-btn">إلغاء</button>
+        <button id="send-image" class="image-picker-btn">إرسال</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة تأكيد حذف الصورة -->
+  <div id="delete-confirm">
+    <div id="delete-confirm-content">
+      <div id="delete-confirm-text">
+        هل أنت متأكد من حذف هذه الصورة؟
+      </div>
+      <div id="delete-confirm-btns">
+        <button id="confirm-delete" class="delete-confirm-btn">حذف</button>
+        <button id="cancel-delete" class="delete-confirm-btn">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة إعدادات اللغة -->
+  <div id="language-settings">
+    <div id="language-content">
+      <h2>إعدادات اللغة</h2>
+      <div id="language-options">
+        <div class="language-option-btn selected" data-lang="ar">
+          العربية
+          <img src="https://flagcdn.com/w20/sa.png" class="language-flag" alt="العربية">
+        </div>
+        <div class="language-option-btn" data-lang="en">
+          English
+          <img src="https://flagcdn.com/w20/gb.png" class="language-flag" alt="English">
+        </div>
+      </div>
+      <button id="save-language">حفظ</button>
+    </div>
+  </div>
+
+  <!-- نافذة المحادثة الخاصة -->
+  <div id="private-chat">
+    <div id="private-chat-header">
+      <span id="private-chat-title">محادثة خاصة مع أحمد</span>
+      <button id="private-chat-close">✕</button>
+    </div>
+    <div id="private-chat-messages">
+      <div class="message-container">
+        <div class="message-sender">أحمد</div>
+        <div class="message">مرحباً، هذه رسالة خاصة</div>
+      </div>
+      <div class="message-container">
+        <div class="message-sender">أنت</div>
+        <div class="message">مرحباً بك، كيف حالك؟</div>
+      </div>
+    </div>
+    <div id="private-chat-input">
+      <input type="text" id="private-message-input" placeholder="اكتب رسالتك...">
+      <button id="private-send-btn">إرسال</button>
+    </div>
+  </div>
+
+  <!-- نافذة إعدادات الإشعارات -->
+  <div id="notifications-settings">
+    <div id="notifications-content">
+      <div class="settings-header">
+        <div class="settings-title">إعدادات الإشعارات</div>
+        <button class="close-settings" id="close-notifications">✕</button>
+      </div>
+      
+      <div class="notification-option">
+        <span class="notification-label">رفض جميع الرسائل الخاصة</span>
+        <label class="switch">
+          <input type="checkbox" id="reject-all-private">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="notification-option">
+        <span class="notification-label">قبول فقط الأعضاء المسجلين</span>
+        <label class="switch">
+          <input type="checkbox" id="accept-registered-only">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="notification-option">
+        <span class="notification-label">قبول جميع الرسائل الخاصة</span>
+        <label class="switch">
+          <input type="checkbox" id="accept-all-private" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="notification-option">
+        <span class="notification-label">إلغاء التنبيهات الصوتية</span>
+        <label class="switch">
+          <input type="checkbox" id="disable-sound-notifications">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="notification-option">
+        <span class="notification-label">إلغاء التنبيهات الصوتية أثناء التحدث</span>
+        <label class="switch">
+          <input type="checkbox" id="disable-sound-while-speaking" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="notification-option">
+        <span class="notification-label">إلغاء تنبيهات تذكير الاسم</span>
+        <label class="switch">
+          <input type="checkbox" id="disable-name-reminders">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="notification-option">
+        <span class="notification-label">إلغاء تنبيهات الرسائل الخاصة</span>
+        <label class="switch">
+          <input type="checkbox" id="disable-private-message-notifications">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="notification-option">
+        <span class="notification-label">تنبيهات الدخول والخروج</span>
+        <label class="switch">
+          <input type="checkbox" id="enable-login-logout-notifications" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="form-buttons">
+        <button id="save-notifications" class="save-admin">حفظ</button>
+        <button id="cancel-notifications" class="cancel-admin">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة إدارة الأدمنية -->
+  <div id="admin-management">
+    <div id="admin-content">
+      <div class="settings-header">
+        <div class="settings-title">إدارة الأدمنية</div>
+        <button class="close-settings" id="close-admin-management">✕</button>
+      </div>
+      
+      <div class="admin-list">
+        <h3>الأدمنية الحاليون</h3>
+        
+        <div class="admin-item">
+          <div class="admin-info">
+            <span>محمد</span>
+            <div class="admin-color admin-red"></div>
+          </div>
+          <div class="admin-actions">
+            <button class="edit-admin">تعديل</button>
+            <button class="remove-admin">إزالة</button>
+          </div>
+        </div>
+        
+        <div class="admin-item">
+          <div class="admin-info">
+            <span>علي</span>
+            <div class="admin-color admin-green"></div>
+          </div>
+          <div class="admin-actions">
+            <button class="edit-admin">تعديل</button>
+            <button class="remove-admin">إزالة</button>
+          </div>
+        </div>
+        
+        <div class="admin-item">
+          <div class="admin-info">
+            <span>خالد</span>
+            <div class="admin-color admin-purple"></div>
+          </div>
+          <div class="admin-actions">
+            <button class="edit-admin">تعديل</button>
+            <button class="remove-admin">إزالة</button>
+          </div>
+        </div>
+      </div>
+      
+      <button id="add-admin-btn" class="add-admin-btn">إضافة أدمن جديد</button>
+    </div>
+  </div>
+
+  <!-- نافذة إضافة/تعديل أدمن -->
+  <div id="admin-form-modal">
+    <div id="admin-form-content">
+      <div class="settings-header">
+        <div class="settings-title">إضافة أدمن جديد</div>
+        <button class="close-settings" id="close-admin-form">✕</button>
+      </div>
+      
+      <div class="form-group">
+        <label for="admin-username">اسم المستخدم:</label>
+        <input type="text" id="admin-username" placeholder="اسم الأدمن">
+      </div>
+      
+      <div class="form-group">
+        <label for="admin-password">كلمة المرور:</label>
+        <input type="password" id="admin-password" placeholder="كلمة المرور">
+      </div>
+      
+      <div class="form-group">
+        <label>لون الأدمن:</label>
+        <div class="color-options-container">
+          <div class="color-option-admin admin-red selected" data-color="red"></div>
+          <div class="color-option-admin admin-green" data-color="green"></div>
+          <div class="color-option-admin admin-purple" data-color="purple"></div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>الصلاحيات:</label>
+        
+        <div class="permission-option">
+          <span>طرد العضو</span>
+          <label class="switch">
+            <input type="checkbox" id="kick-permission" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="permission-option">
+          <span>حظر العضو</span>
+          <label class="switch">
+            <input type="checkbox" id="ban-permission" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="permission-option">
+          <span>إيقاف الكتابة</span>
+          <label class="switch">
+            <input type="checkbox" id="mute-permission" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="permission-option">
+          <span>إيقاف المايك</span>
+          <label class="switch">
+            <input type="checkbox" id="mic-off-permission">
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="permission-option">
+          <span>إيقاف الكاميرا</span>
+          <label class="switch">
+            <input type="checkbox" id="camera-off-permission">
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="permission-option">
+          <span>عرض تفاصيل العضو</span>
+          <label class="switch">
+            <input type="checkbox" id="details-permission" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="form-buttons">
+        <button id="save-admin" class="save-admin">حفظ</button>
+        <button id="cancel-admin" class="cancel-admin">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة سجلات الدخول والخروج -->
+  <div id="logs-modal">
+    <div id="logs-content">
+      <div class="settings-header">
+        <div class="settings-title">سجلات النظام</div>
+        <button class="close-settings" id="close-logs">✕</button>
+      </div>
+      
+      <div class="log-tabs">
+        <div class="log-tab active" data-tab="login">سجل الدخول والخروج</div>
+        <div class="log-tab" data-tab="ban">سجل الحظر</div>
+      </div>
+      
+      <div id="login-log" class="log-content active">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>اسم العضو</th>
+              <th>الحدث</th>
+              <th>الوقت</th>
+              <th>IP</th>
+              <th>الدولة</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>محمد</td>
+              <td>دخول</td>
+              <td>10:30 ص</td>
+              <td>192.168.1.1</td>
+              <td>السعودية</td>
+            </tr>
+            <tr>
+              <td>أحمد</td>
+              <td>دخول</td>
+              <td>10:35 ص</td>
+              <td>192.168.1.2</td>
+              <td>مصر</td>
+            </tr>
+            <tr>
+              <td>علي</td>
+              <td>خروج</td>
+              <td>11:20 ص</td>
+              <td>192.168.1.3</td>
+              <td>الإمارات</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div id="ban-log" class="log-content">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>اسم العضو</th>
+              <th>بواسطة</th>
+              <th>الوقت</th>
+              <th>IP</th>
+              <th>الدولة</th>
+              <th>إجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>خالد</td>
+              <td>محمد</td>
+              <td>9:30 ص</td>
+              <td>192.168.1.4</td>
+              <td>الكويت</td>
+              <td><button class="unban-btn">فك الحظر</button></td>
+            </tr>
+            <tr>
+              <td>سعيد</td>
+              <td>علي</td>
+              <td>10:15 ص</td>
+              <td>192.168.1.5</td>
+              <td>قطر</td>
+              <td><button class="unban-btn">فك الحظر</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة تفاصيل العضو -->
+  <div id="user-details-modal">
+    <div id="user-details-content">
+      <div class="settings-header">
+        <div class="settings-title">تفاصيل العضو</div>
+        <button class="close-settings" id="close-details">✕</button>
+      </div>
+      
+      <div class="user-details-row">
+        <div class="user-details-label">اسم العضو:</div>
+        <div class="user-details-value">أحمد</div>
+      </div>
+      
+      <div class="user-details-row">
+        <div class="user-details-label">الحالة:</div>
+        <div class="user-details-value">متصل</div>
+      </div>
+      
+      <div class="user-details-row">
+        <div class="user-details-label">عنوان IP:</div>
+        <div class="user-details-value">192.168.1.2</div>
+      </div>
+      
+      <div class="user-details-row">
+        <div class="user-details-label">الدولة:</div>
+        <div class="user-details-value">مصر</div>
+      </div>
+      
+      <div class="user-details-row">
+        <div class="user-details-label">وقت الدخول:</div>
+        <div class="user-details-value">10:35 ص</div>
+      </div>
+      
+      <div class="user-details-row">
+        <div class="user-details-label">آخر نشاط:</div>
+        <div class="user-details-value">10:40 ص</div>
+      </div>
+      
+      <button class="close-details">إغلاق</button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // تعريف العناصر
+      const emojiBtn = document.getElementById('emoji-btn');
+      const emojiPicker = document.getElementById('emoji-picker');
+      const boldBtn = document.getElementById('bold-btn');
+      const fontSizeBtn = document.getElementById('font-size-btn');
+      const fontSizeMenu = document.getElementById('font-size-menu');
+      const colorPickerBtn = document.getElementById('color-picker-btn');
+      const colorPicker = document.getElementById('color-picker');
+      const messageInput = document.getElementById('message-input');
+      const sendBtn = document.getElementById('send-btn');
+      const settingsBtn = document.getElementById('settings-btn');
+      const statusBtn = document.getElementById('status-btn');
+      const languageBtn = document.getElementById('language-btn');
+      const settingsMenu = document.getElementById('settings-menu');
+      const statusMenu = document.getElementById('status-menu');
+      const languageMenu = document.getElementById('language-menu');
+      const darkModeBtn = document.getElementById('dark-mode-btn');
+      const chatArea = document.getElementById('chat');
+      const emojiTabs = document.querySelectorAll('.emoji-tab');
+      const emojiCategories = document.querySelectorAll('.emoji-category');
+      const recentEmojiContainer = document.getElementById('recent-emoji');
+      const speakerName = document.getElementById('speaker-name');
+      const speakerTimer = document.getElementById('speaker-timer');
+      const fontOptions = document.querySelectorAll('.font-size-option');
+      const colorOptions = document.querySelectorAll('.color-option');
+      const statusOptions = document.querySelectorAll('.status-option');
+      const languageOptions = document.querySelectorAll('.language-option');
+      const changeBgBtn = document.getElementById('change-bg-btn');
+      const notificationsBtn = document.getElementById('notifications-btn');
+      const languageSettingsBtn = document.getElementById('language-settings-btn');
+      const cameraBtn = document.getElementById('camera-btn');
+      const imageBtn = document.getElementById('image-btn');
+      const cameraModal = document.getElementById('camera-modal');
+      const closeCameraBtn = document.getElementById('close-camera');
+      const kickViewerBtn = document.getElementById('kick-viewer');
+      const viewRequestModal = document.getElementById('view-request-modal');
+      const acceptViewBtn = document.getElementById('accept-view');
+      const rejectViewBtn = document.getElementById('reject-view');
+      const imagePicker = document.getElementById('image-picker');
+      const cancelImageBtn = document.getElementById('cancel-image');
+      const sendImageBtn = document.getElementById('send-image');
+      const deleteConfirm = document.getElementById('delete-confirm');
+      const confirmDeleteBtn = document.getElementById('confirm-delete');
+      const cancelDeleteBtn = document.getElementById('cancel-delete');
+      const galleryImages = document.querySelectorAll('.gallery-image');
+      const fileInput = document.getElementById('file-input');
+      const filePreview = document.getElementById('file-preview');
+      const previewImage = document.getElementById('preview-image');
+      const sendFileBtn = document.getElementById('send-file-btn');
+      const cancelFileBtn = document.getElementById('cancel-file-btn');
+      const replyPreview = document.getElementById('reply-preview');
+      const clearReplyBtn = document.querySelector('.clear-reply');
+      const languageSettings = document.getElementById('language-settings');
+      const languageOptionBtns = document.querySelectorAll('.language-option-btn');
+      const saveLanguageBtn = document.getElementById('save-language');
+      const viewCameraBtns = document.querySelectorAll('.view-camera-btn');
+      const viewCameraModal = document.getElementById('view-camera-modal');
+      const viewCameraClose = document.getElementById('view-camera-close');
+      const privateChat = document.getElementById('private-chat');
+      const privateChatClose = document.getElementById('private-chat-close');
+      const privateMessageInput = document.getElementById('private-message-input');
+      const privateSendBtn = document.getElementById('private-send-btn');
+      const privateChatMessages = document.getElementById('private-chat-messages');
+      const privateChatTitle = document.getElementById('private-chat-title');
+      const userItems = document.querySelectorAll('.user-item');
+      const userMenus = document.querySelectorAll('.user-menu');
+      
+      // عناصر إعدادات الإشعارات الجديدة
+      const notificationsSettings = document.getElementById('notifications-settings');
+      const closeNotificationsBtn = document.getElementById('close-notifications');
+      const saveNotificationsBtn = document.getElementById('save-notifications');
+      const cancelNotificationsBtn = document.getElementById('cancel-notifications');
+      
+      // عناصر إدارة الأدمنية الجديدة
+      const adminManagement = document.getElementById('admin-management');
+      const adminManagementBtn = document.getElementById('admin-management-btn');
+      const closeAdminManagementBtn = document.getElementById('close-admin-management');
+      const addAdminBtn = document.getElementById('add-admin-btn');
+      const adminFormModal = document.getElementById('admin-form-modal');
+      const closeAdminFormBtn = document.getElementById('close-admin-form');
+      const saveAdminBtn = document.getElementById('save-admin');
+      const cancelAdminBtn = document.getElementById('cancel-admin');
+      const adminColorOptions = document.querySelectorAll('.color-option-admin');
+      
+      // عناصر سجلات الدخول والحظر
+      const loginLogBtn = document.getElementById('login-log-btn');
+      const banLogBtn = document.getElementById('ban-log-btn');
+      const logsModal = document.getElementById('logs-modal');
+      const closeLogsBtn = document.getElementById('close-logs');
+      const logTabs = document.querySelectorAll('.log-tab');
+      const logContents = document.querySelectorAll('.log-content');
+      
+      // عناصر تفاصيل العضو
+      const userDetailsModal = document.getElementById('user-details-modal');
+      const closeDetailsBtn = document.getElementById('close-details');
+      
+      // خريطة الحالات مع أيقوناتها
+      const statusIcons = {
+        'available': 'https://ta-taksi.com/wp-content/uploads/2025/07/متاح.png',
+        'away': 'https://ta-taksi.com/wp-content/uploads/2025/07/بالخارج.png',
+        'busy': 'https://ta-taksi.com/wp-content/uploads/2025/07/مشغول.png',
+        'phone': 'https://ta-taksi.com/wp-content/uploads/2025/07/1.png',
+        'food': 'https://ta-taksi.com/wp-content/uploads/2025/07/طعام.png',
+        'sleep': 'https://ta-taksi.com/wp-content/uploads/2025/07/نائم.png',
+        'car': 'https://ta-taksi.com/wp-content/uploads/2025/07/سيارة.png'
+      };
+      
+      // تخزين الإعدادات
+      let recentEmojis = JSON.parse(localStorage.getItem('recentEmojis')) || [];
+      let currentFontSize = localStorage.getItem('fontSize') || '16px';
+      let currentTextColor = localStorage.getItem('textColor') || '#000000';
+      let isBold = localStorage.getItem('isBold') === 'true';
+      let isAdmin = true;
+      let isDarkMode = localStorage.getItem('darkMode') === 'true';
+      let currentStatus = 'available';
+      let currentBackground = localStorage.getItem('background') || 'default';
+      let currentLanguage = localStorage.getItem('language') || 'ar';
+      let replyTo = null;
+      let selectedImage = null;
+      let imageToDelete = null;
+      let selectedLanguage = currentLanguage;
+      let cameraActive = false;
+      let ignoredUsers = JSON.parse(localStorage.getItem('ignoredUsers')) || [];
+      let currentPrivateChatUserId = null;
+      
+      // إعدادات الإشعارات
+      let notificationSettings = {
+        rejectAllPrivate: false,
+        acceptRegisteredOnly: false,
+        acceptAllPrivate: true,
+        disableSoundNotifications: false,
+        disableSoundWhileSpeaking: true,
+        disableNameReminders: false,
+        disablePrivateMessageNotifications: false,
+        enableLoginLogoutNotifications: true
+      };
+      
+      // تحميل إعدادات الإشعارات من localStorage
+      const savedNotificationSettings = localStorage.getItem('notificationSettings');
+      if (savedNotificationSettings) {
+        notificationSettings = JSON.parse(savedNotificationSettings);
+      }
+      
+      // تطبيق الوضع المظلم إذا كان مفعلاً
+      if(isDarkMode) {
+        document.body.classList.add('dark-mode');
+        darkModeBtn.textContent = '☀️';
+      } else {
+        darkModeBtn.textContent = '🌙';
+      }
+      
+      // تطبيق الخلفية المختارة
+      applyBackground(currentBackground);
+      
+      // تطبيق إعدادات الخط المحفوظة
+      messageInput.style.fontSize = currentFontSize;
+      messageInput.style.color = currentTextColor;
+      if (isBold) {
+        messageInput.style.fontWeight = 'bold';
+        boldBtn.classList.add('active');
+      }
+      
+      // إضافة class للإدارة إذا كان المستخدم مديراً
+      if(isAdmin) {
+        document.body.classList.add('is-admin');
+      }
+      
+      // تحديث عرض آخر الإيموجيات المستخدمة
+      function updateRecentEmojis() {
+        recentEmojiContainer.innerHTML = '';
+        recentEmojis.forEach(emoji => {
+          const emojiElement = document.createElement('span');
+          emojiElement.className = 'emoji';
+          emojiElement.textContent = emoji;
+          emojiElement.addEventListener('click', function() {
+            messageInput.value += emoji;
+            addToRecentEmojis(emoji);
+          });
+          recentEmojiContainer.appendChild(emojiElement);
+        });
+      }
+      
+      // إضافة إيموجي إلى القائمة الأخيرة
+      function addToRecentEmojis(emoji) {
+        recentEmojis = recentEmojis.filter(e => e !== emoji);
+        recentEmojis.unshift(emoji);
+        if (recentEmojis.length > 12) {
+          recentEmojis.pop();
+        }
+        localStorage.setItem('recentEmojis', JSON.stringify(recentEmojis));
+        updateRecentEmojis();
+      }
+      
+      // تطبيق الخلفية المختارة
+      function applyBackground(bg) {
+        // يمكنك هنا تطبيق الخلفية حسب الاختيار
+        console.log('تم تطبيق الخلفية: ' + bg);
+        localStorage.setItem('background', bg);
+      }
+      
+      // تغيير اللغة
+      function changeLanguage(lang) {
+        currentLanguage = lang;
+        localStorage.setItem('language', lang);
+        if (lang === 'ar') {
+          document.documentElement.lang = 'ar';
+          document.documentElement.dir = 'rtl';
+          document.querySelector('.room-title').textContent = 'غرفة الدردشة العامة';
+          document.getElementById('message-input').placeholder = 'اكتب رسالتك هنا...';
+          document.getElementById('send-btn').textContent = 'إرسال';
+        } else {
+          document.documentElement.lang = 'en';
+          document.documentElement.dir = 'ltr';
+          document.querySelector('.room-title').textContent = 'General Chat Room';
+          document.getElementById('message-input').placeholder = 'Type your message here...';
+          document.getElementById('send-btn').textContent = 'Send';
+        }
+      }
+      
+      // إدارة فتح/إغلاق القوائم
+      function closeAllMenus() {
+        emojiPicker.style.display = 'none';
+        fontSizeMenu.style.display = 'none';
+        colorPicker.style.display = 'none';
+        settingsMenu.style.display = 'none';
+        statusMenu.style.display = 'none';
+        languageMenu.style.display = 'none';
+        languageSettings.style.display = 'none';
+        notificationsSettings.style.display = 'none';
+        adminManagement.style.display = 'none';
+        adminFormModal.style.display = 'none';
+        logsModal.style.display = 'none';
+        userDetailsModal.style.display = 'none';
+        
+        // إغلاق قوائم المستخدمين
+        userMenus.forEach(menu => {
+          menu.style.display = 'none';
+        });
+      }
+      
+      // تطبيق إعدادات الإشعارات على واجهة المستخدم
+      function applyNotificationSettings() {
+        document.getElementById('reject-all-private').checked = notificationSettings.rejectAllPrivate;
+        document.getElementById('accept-registered-only').checked = notificationSettings.acceptRegisteredOnly;
+        document.getElementById('accept-all-private').checked = notificationSettings.acceptAllPrivate;
+        document.getElementById('disable-sound-notifications').checked = notificationSettings.disableSoundNotifications;
+        document.getElementById('disable-sound-while-speaking').checked = notificationSettings.disableSoundWhileSpeaking;
+        document.getElementById('disable-name-reminders').checked = notificationSettings.disableNameReminders;
+        document.getElementById('disable-private-message-notifications').checked = notificationSettings.disablePrivateMessageNotifications;
+        document.getElementById('enable-login-logout-notifications').checked = notificationSettings.enableLoginLogoutNotifications;
+      }
+      
+      // حفظ إعدادات الإشعارات
+      function saveNotificationSettings() {
+        notificationSettings = {
+          rejectAllPrivate: document.getElementById('reject-all-private').checked,
+          acceptRegisteredOnly: document.getElementById('accept-registered-only').checked,
+          acceptAllPrivate: document.getElementById('accept-all-private').checked,
+          disableSoundNotifications: document.getElementById('disable-sound-notifications').checked,
+          disableSoundWhileSpeaking: document.getElementById('disable-sound-while-speaking').checked,
+          disableNameReminders: document.getElementById('disable-name-reminders').checked,
+          disablePrivateMessageNotifications: document.getElementById('disable-private-message-notifications').checked,
+          enableLoginLogoutNotifications: document.getElementById('enable-login-logout-notifications').checked
+        };
+        
+        localStorage.setItem('notificationSettings', JSON.stringify(notificationSettings));
+        closeAllMenus();
+      }
+      
+      // تبديل بين تبويبات السجلات
+      function switchLogTab(tabName) {
+        logTabs.forEach(tab => {
+          tab.classList.remove('active');
+          if (tab.dataset.tab === tabName) {
+            tab.classList.add('active');
+          }
+        });
+        
+        logContents.forEach(content => {
+          content.classList.remove('active');
+          if (content.id === `${tabName}-log`) {
+            content.classList.add('active');
+          }
+        });
+      }
+      
+      // زر الوضع المظلم
+      darkModeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        isDarkMode = !isDarkMode;
+        localStorage.setItem('darkMode', isDarkMode);
+        
+        if(isDarkMode) {
+          document.body.classList.add('dark-mode');
+          darkModeBtn.textContent = '☀️';
+        } else {
+          document.body.classList.remove('dark-mode');
+          darkModeBtn.textContent = '🌙';
+        }
+      });
+      
+      // زر الإيموجي
+      emojiBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if(emojiPicker.style.display === 'block') {
+          emojiPicker.style.display = 'none';
+        } else {
+          closeAllMenus();
+          emojiPicker.style.display = 'block';
+          updateRecentEmojis();
+        }
+      });
+      
+      // زر التغميق
+      boldBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        isBold = !isBold;
+        localStorage.setItem('isBold', isBold);
+        if(isBold) {
+          boldBtn.classList.add('active');
+          messageInput.style.fontWeight = 'bold';
+        } else {
+          boldBtn.classList.remove('active');
+          messageInput.style.fontWeight = 'normal';
+        }
+      });
+      
+      // تبديل بين تبويبات الإيموجي
+      emojiTabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const tabName = this.dataset.tab;
+          
+          emojiTabs.forEach(t => t.classList.remove('active'));
+          this.classList.add('active');
+          
+          emojiCategories.forEach(cat => cat.classList.remove('active'));
+          document.getElementById(`${tabName}-emoji`).classList.add('active');
+        });
+      });
+      
+      // اختيار إيموجي
+      document.querySelectorAll('.emoji').forEach(emoji => {
+        emoji.addEventListener('click', function(e) {
+          e.stopPropagation();
+          messageInput.value += this.textContent;
+          addToRecentEmojis(this.textContent);
+        });
+      });
+      
+      // زر حجم الخط
+      fontSizeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if(fontSizeMenu.style.display === 'block') {
+          fontSizeMenu.style.display = 'none';
+        } else {
+          closeAllMenus();
+          fontSizeMenu.style.display = 'block';
+        }
+      });
+      
+      // اختيار حجم الخط
+      fontOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          currentFontSize = this.dataset.size;
+          messageInput.style.fontSize = currentFontSize;
+          localStorage.setItem('fontSize', currentFontSize);
+          fontSizeMenu.style.display = 'none';
+        });
+      });
+      
+      // زر لون النص
+      colorPickerBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if(colorPicker.style.display === 'block') {
+          colorPicker.style.display = 'none';
+        } else {
+          closeAllMenus();
+          colorPicker.style.display = 'block';
+        }
+      });
+      
+      // اختيار لون النص
+      colorOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          currentTextColor = this.dataset.color;
+          messageInput.style.color = currentTextColor;
+          localStorage.setItem('textColor', currentTextColor);
+          colorPicker.style.display = 'none';
+        });
+      });
+      
+      // زر الإرسال
+      sendBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        sendMessage();
+      });
+      
+      // إرسال بالضغط على Enter
+      messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      
+      // زر الإعدادات
+      settingsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if(settingsMenu.style.display === 'block') {
+          settingsMenu.style.display = 'none';
+        } else {
+          closeAllMenus();
+          settingsMenu.style.display = 'block';
+        }
+      });
+      
+      // زر الحالة
+      statusBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if(statusMenu.style.display === 'block') {
+          statusMenu.style.display = 'none';
+        } else {
+          closeAllMenus();
+          statusMenu.style.display = 'block';
+        }
+      });
+      
+      // زر اللغة
+      languageBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if(languageMenu.style.display === 'block') {
+          languageMenu.style.display = 'none';
+        } else {
+          closeAllMenus();
+          languageMenu.style.display = 'block';
+        }
+      });
+      
+      // اختيار اللغة من القائمة السريعة
+      languageOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const lang = this.dataset.lang;
+          changeLanguage(lang);
+          languageMenu.style.display = 'none';
+        });
+      });
+      
+      // زر إعدادات اللغة
+      languageSettingsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeAllMenus();
+        languageSettings.style.display = 'flex';
+      });
+      
+      // اختيار لغة من إعدادات اللغة
+      languageOptionBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          languageOptionBtns.forEach(b => b.classList.remove('selected'));
+          this.classList.add('selected');
+          selectedLanguage = this.dataset.lang;
+        });
+      });
+      
+      // حفظ إعدادات اللغة
+      saveLanguageBtn.addEventListener('click', function() {
+        changeLanguage(selectedLanguage);
+        languageSettings.style.display = 'none';
+      });
+      
+      // تحديث اختيار الحالة
+      document.querySelectorAll('.status-option').forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const status = this.dataset.status;
+          currentStatus = status;
+          
+          // تحديث أيقونة الحالة للمستخدم الحالي
+          const statusIcons = document.querySelectorAll('.user-status-icon');
+          statusIcons.forEach(icon => {
+            if (icon.closest('.user-item').querySelector('.user-name').textContent.includes('محمد')) {
+              icon.src = statusIcons[status];
+              icon.alt = this.querySelector('span').textContent;
+            }
+          });
+          
+          // تحديث نقطة الحالة للمستخدم الحالي
+          const statusDot = document.querySelector('.user-avatar .user-status-dot');
+          statusDot.className = 'user-status-dot';
+          
+          if (status === 'available') {
+            statusDot.classList.add('available');
+          } else if (status === 'away' || status === 'food' || status === 'car') {
+            statusDot.classList.add('away');
+          } else {
+            statusDot.classList.add('busy');
+          }
+          
+          statusMenu.style.display = 'none';
+        });
+      });
+      
+      // زر الكاميرا
+      cameraBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        cameraModal.style.display = 'flex';
+        cameraActive = true;
+        
+        // محاكاة فتح الكاميرا
+        setTimeout(() => {
+          document.getElementById('camera-preview').innerHTML = '<video autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>';
+          
+          // محاكاة طلب مشاهدة الكاميرا من أحمد
+          setTimeout(() => {
+            viewRequestModal.style.display = 'flex';
+          }, 2000);
+        }, 500);
+      });
+      
+      // إغلاق الكاميرا
+      closeCameraBtn.addEventListener('click', function() {
+        cameraModal.style.display = 'none';
+        cameraActive = false;
+        
+        // إزالة أيقونة الكاميرا من اسم المستخدم
+        const cameraIcons = document.querySelectorAll('.camera-icon');
+        cameraIcons.forEach(icon => {
+          if (icon.closest('.user-item').querySelector('.user-name').textContent.includes('محمد')) {
+            icon.remove();
+          }
+        });
+      });
+      
+      // طرد المشاهد
+      kickViewerBtn.addEventListener('click', function() {
+        document.querySelector('.viewer-item').remove();
+      });
+      
+      // قبول مشاهدة الكاميرا
+      acceptViewBtn.addEventListener('click', function() {
+        viewRequestModal.style.display = 'none';
+        document.getElementById('camera-viewers').innerHTML += '<span class="viewer-item">أحمد</span>';
+      });
+      
+      // رفض مشاهدة الكاميرا
+      rejectViewBtn.addEventListener('click', function() {
+        viewRequestModal.style.display = 'none';
+      });
+      
+      // زر مشاهدة الكاميرا
+      viewCameraBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          viewCameraModal.style.display = 'flex';
+          
+          // محاكاة فتح الكاميرا
+          setTimeout(() => {
+            document.getElementById('view-camera-preview').innerHTML = '<video autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>';
+          }, 500);
+        });
+      });
+      
+      // إغلاق نافذة مشاهدة الكاميرا
+      viewCameraClose.addEventListener('click', function() {
+        viewCameraModal.style.display = 'none';
+      });
+      
+      // زر إرسال الصورة
+      imageBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        fileInput.click();
+      });
+      
+      // عند اختيار ملف صورة
+      fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+          const file = e.target.files[0];
+          
+          // التحقق من أن الملف صورة
+          if (file.type.match('image.*')) {
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+              previewImage.src = event.target.result;
+              filePreview.style.display = 'block';
+              
+              // إخفاء معاينة الرد إذا كانت ظاهرة
+              replyPreview.style.display = 'none';
+              replyTo = null;
+            };
+            
+            reader.readAsDataURL(file);
+          } else {
+            alert('الرجاء اختيار ملف صورة فقط');
+          }
+        }
+      });
+      
+      // إرسال الصورة بعد المعاينة
+      sendFileBtn.addEventListener('click', function() {
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          const reader = new FileReader();
+          
+          reader.onload = function(event) {
+            // إرسال الصورة إلى الدردشة
+            sendImage(event.target.result);
+            
+            // إعادة تعيين العناصر
+            fileInput.value = '';
+            filePreview.style.display = 'none';
+          };
+          
+          reader.readAsDataURL(file);
+        }
+      });
+      
+      // إلغاء إرسال الصورة
+      cancelFileBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        filePreview.style.display = 'none';
+      });
+      
+      // دالة إرسال الصورة
+      function sendImage(imageUrl) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message-container';
+        
+        const senderDiv = document.createElement('div');
+        senderDiv.className = 'message-sender';
+        senderDiv.textContent = 'محمد';
+        
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'image-container';
+        imageContainer.style.position = 'relative';
+        
+        const imageElement = document.createElement('img');
+        imageElement.src = imageUrl;
+        imageElement.className = 'image-message';
+        
+        const optionsDiv = document.createElement('div');
+        optionsDiv.className = 'image-options';
+        
+        const deleteOption = document.createElement('span');
+        deleteOption.className = 'message-option';
+        deleteOption.title = 'حذف';
+        deleteOption.textContent = '🗑️';
+        
+        optionsDiv.appendChild(deleteOption);
+        imageContainer.appendChild(imageElement);
+        imageContainer.appendChild(optionsDiv);
+        
+        messageDiv.appendChild(senderDiv);
+        messageDiv.appendChild(imageContainer);
+        
+        chatArea.appendChild(messageDiv);
+        chatArea.scrollTop = chatArea.scrollHeight;
+        
+        // حدث حذف الصورة
+        deleteOption.addEventListener('click', function(e) {
+          e.stopPropagation();
+          imageToDelete = imageContainer;
+          deleteConfirm.style.display = 'flex';
+        });
+      }
+      
+      // تأكيد حذف الصورة
+      confirmDeleteBtn.addEventListener('click', function() {
+        if (imageToDelete) {
+          imageToDelete.remove();
+          deleteConfirm.style.display = 'none';
+          imageToDelete = null;
+        }
+      });
+      
+      // إلغاء حذف الصورة
+      cancelDeleteBtn.addEventListener('click', function() {
+        deleteConfirm.style.display = 'none';
+        imageToDelete = null;
+      });
+      
+      // دالة إرسال الرسالة
+      function sendMessage() {
+        const messageText = messageInput.value.trim();
+        if (messageText !== '') {
+          const messageDiv = document.createElement('div');
+          messageDiv.className = 'message-container';
+          
+          const senderDiv = document.createElement('div');
+          senderDiv.className = 'message-sender';
+          senderDiv.textContent = 'محمد';
+          
+          const messageContent = document.createElement('div');
+          messageContent.className = 'message';
+          messageContent.style.fontSize = currentFontSize;
+          messageContent.style.color = currentTextColor;
+          
+          if(isBold) {
+            messageContent.classList.add('bold-text');
+          }
+          
+          messageContent.textContent = messageText;
+          
+          // إضافة خيارات الرسالة
+          const optionsDiv = document.createElement('div');
+          optionsDiv.className = 'message-options';
+          
+          const copyOption = document.createElement('span');
+          copyOption.className = 'message-option';
+          copyOption.title = 'نسخ';
+          copyOption.textContent = '📋';
+          
+          const replyOption = document.createElement('span');
+          replyOption.className = 'message-option';
+          replyOption.title = 'رد';
+          replyOption.textContent = '↩️';
+          
+          optionsDiv.appendChild(copyOption);
+          optionsDiv.appendChild(replyOption);
+          messageContent.appendChild(optionsDiv);
+          
+          // إضافة رد إذا كان موجوداً
+          if (replyTo) {
+            const replyDiv = document.createElement('div');
+            replyDiv.className = 'reply-container';
+            
+            const replySender = document.createElement('div');
+            replySender.className = 'reply-sender';
+            replySender.textContent = 'رد على: ' + replyTo.sender;
+            
+            const replyText = document.createElement('div');
+            replyText.className = 'reply-text';
+            replyText.textContent = replyTo.text;
+            
+            replyDiv.appendChild(replySender);
+            replyDiv.appendChild(replyText);
+            
+            messageDiv.appendChild(replyDiv);
+          }
+          
+          messageDiv.appendChild(senderDiv);
+          messageDiv.appendChild(messageContent);
+          
+          chatArea.appendChild(messageDiv);
+          
+          // مسح محتوى حقل الإدخال فقط (مع الحفاظ على التنسيق)
+          messageInput.value = '';
+          
+          // لا نعيد تعيين التنسيق هنا، بل نحتفظ بالإعدادات الحالية
+          replyTo = null;
+          replyPreview.style.display = 'none';
+          chatArea.scrollTop = chatArea.scrollHeight;
+          
+          // إضافة حدث رد على الرسائل الجديدة
+          replyOption.addEventListener('click', function(e) {
+            e.stopPropagation();
+            replyTo = {
+              sender: 'محمد',
+              text: messageText
+            };
+            showReplyPreview();
+          });
+          
+          // إضافة حدث نسخ الرسائل الجديدة
+          copyOption.addEventListener('click', function(e) {
+            e.stopPropagation();
+            navigator.clipboard.writeText(messageText);
+            alert('تم نسخ الرسالة');
+            
+            // نسخ الرسالة إلى مربع الكتابة تلقائيًا
+            messageInput.value = messageText;
+          });
+          
+          // محاكاة أن المستخدم أصبح المتحدث
+          speakerName.textContent = 'أنت';
+          document.querySelectorAll('.user-item').forEach(item => {
+            item.classList.remove('speaking-user');
+            if (item.querySelector('.user-name').textContent.includes('محمد')) {
+              item.classList.add('speaking-user');
+            }
+          });
+        }
+      }
+      
+      // عرض معاينة الرد
+      function showReplyPreview() {
+        const replyContainer = replyPreview.querySelector('.reply-container');
+        replyContainer.querySelector('.reply-sender').textContent = 'رد على: ' + replyTo.sender;
+        replyContainer.querySelector('.reply-text').textContent = replyTo.text;
+        replyPreview.style.display = 'block';
+      }
+      
+      // مسح الرد
+      if (clearReplyBtn) {
+        clearReplyBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          replyTo = null;
+          replyPreview.style.display = 'none';
+        });
+      }
+      
+      // إدارة قوائم المستخدمين
+      userItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+          e.stopPropagation();
+          
+          // إغلاق جميع القوائم أولاً
+          userMenus.forEach(menu => {
+            menu.style.display = 'none';
+          });
+          
+          // فتح قائمة المستخدم الحالي
+          const menu = this.querySelector('.user-menu');
+          menu.style.display = 'block';
+          
+          // إخفاء خيار مشاهدة الكاميرا إذا لم يكن المستخدم يشارك كاميرته
+          const viewCameraOption = menu.querySelector('.view-camera-menu');
+          const cameraIcon = this.querySelector('.camera-icon');
+          
+          if (cameraIcon) {
+            viewCameraOption.style.display = 'block';
+          } else {
+            viewCameraOption.style.display = 'none';
+          }
+          
+          // تحديث خيار التجاهل بناءً على الحالة الحالية
+          const ignoreOption = menu.querySelector('.ignore-user-menu');
+          const userId = this.dataset.userId;
+          
+          if (ignoredUsers.includes(userId)) {
+            ignoreOption.textContent = 'إلغاء التجاهل';
+          } else {
+            ignoreOption.textContent = 'تجاهل';
+          }
+        });
+      });
+      
+      // إضافة أحداث لقوائم المستخدمين
+      document.querySelectorAll('.view-camera-menu').forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          viewCameraModal.style.display = 'flex';
+          
+          // محاكاة فتح الكاميرا
+          setTimeout(() => {
+            document.getElementById('view-camera-preview').innerHTML = '<video autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>';
+          }, 500);
+        });
+      });
+      
+      document.querySelectorAll('.private-chat-menu').forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const userItem = this.closest('.user-item');
+          const userName = userItem.querySelector('.user-name').textContent.trim();
+          const userId = userItem.dataset.userId;
+          
+          currentPrivateChatUserId = userId;
+          privateChatTitle.textContent = `محادثة خاصة مع ${userName}`;
+          privateChat.style.display = 'flex';
+        });
+      });
+      
+      document.querySelectorAll('.ignore-user-menu').forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const userItem = this.closest('.user-item');
+          const userId = userItem.dataset.userId;
+          
+          if (ignoredUsers.includes(userId)) {
+            // إلغاء التجاهل
+            ignoredUsers = ignoredUsers.filter(id => id !== userId);
+            option.textContent = 'تجاهل';
+            
+            // إظهار جميع رسائل المستخدم
+            document.querySelectorAll(`.message-container[data-sender-id="${userId}"]`).forEach(msg => {
+              msg.classList.remove('ignored-message');
+            });
+          } else {
+            // تجاهل المستخدم
+            ignoredUsers.push(userId);
+            option.textContent = 'إلغاء التجاهل';
+            
+            // إخفاء جميع رسائل المستخدم
+            document.querySelectorAll(`.message-container[data-sender-id="${userId}"]`).forEach(msg => {
+              msg.classList.add('ignored-message');
+            });
+          }
+          
+          localStorage.setItem('ignoredUsers', JSON.stringify(ignoredUsers));
+        });
+      });
+      
+      document.querySelectorAll('.kick-user-menu').forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const userItem = this.closest('.user-item');
+          
+          // محاكاة طرد المستخدم
+          if (userItem.querySelector('.user-name').textContent.includes('أحمد')) {
+            userItem.remove();
+            document.querySelector('#online-count').textContent = '(1)';
+          }
+        });
+      });
+      
+      document.querySelectorAll('.ban-user-menu').forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const userItem = this.closest('.user-item');
+          
+          // محاكاة حظر المستخدم
+          if (userItem.querySelector('.user-name').textContent.includes('أحمد')) {
+            userItem.remove();
+            document.querySelector('#online-count').textContent = '(1)';
+            alert('تم حظر المستخدم بنجاح');
+          }
+        });
+      });
+      
+      document.querySelectorAll('.mute-user-menu').forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const userItem = this.closest('.user-item');
+          
+          // محاكاة إيقاف الكتابة للمستخدم
+          if (userItem.querySelector('.user-name').textContent.includes('أحمد')) {
+            alert('تم إيقاف الكتابة للمستخدم بنجاح');
+          }
+        });
+      });
+      
+      document.querySelectorAll('.mic-off-user-menu').forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const userItem = this.closest('.user-item');
+          
+          // محاكاة إيقاف المايك للمستخدم
+          if (userItem.querySelector('.user-name').textContent.includes('أحمد')) {
+            alert('تم إيقاف المايك للمستخدم بنجاح');
+          }
+        });
+      });
+      
+      document.querySelectorAll('.camera-off-user-menu').forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const userItem = this.closest('.user-item');
+          
+          // محاكاة إيقاف الكاميرا للمستخدم
+          if (userItem.querySelector('.user-name').textContent.includes('أحمد')) {
+            alert('تم إيقاف الكاميرا للمستخدم بنجاح');
+          }
+        });
+      });
+      
+      document.querySelectorAll('.details-user-menu').forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          userDetailsModal.style.display = 'flex';
+        });
+      });
+      
+      // إغلاق المحادثة الخاصة
+      privateChatClose.addEventListener('click', function() {
+        privateChat.style.display = 'none';
+        currentPrivateChatUserId = null;
+      });
+      
+      // إرسال رسالة خاصة
+      privateSendBtn.addEventListener('click', function() {
+        const messageText = privateMessageInput.value.trim();
+        if (messageText !== '' && currentPrivateChatUserId) {
+          const messageDiv = document.createElement('div');
+          messageDiv.className = 'message-container';
+          
+          const senderDiv = document.createElement('div');
+          senderDiv.className = 'message-sender';
+          senderDiv.textContent = 'أنت';
+          
+          const messageContent = document.createElement('div');
+          messageContent.className = 'message';
+          messageContent.textContent = messageText;
+          
+          messageDiv.appendChild(senderDiv);
+          messageDiv.appendChild(messageContent);
+          
+          privateChatMessages.appendChild(messageDiv);
+          privateMessageInput.value = '';
+          privateChatMessages.scrollTop = privateChatMessages.scrollHeight;
+        }
+      });
+      
+      // إرسال رسالة خاصة بالضغط على Enter
+      privateMessageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          privateSendBtn.click();
+        }
+      });
+      
+      // إعدادات الإشعارات
+      notificationsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeAllMenus();
+        notificationsSettings.style.display = 'flex';
+        applyNotificationSettings();
+      });
+      
+      closeNotificationsBtn.addEventListener('click', function() {
+        notificationsSettings.style.display = 'none';
+      });
+      
+      saveNotificationsBtn.addEventListener('click', function() {
+        saveNotificationSettings();
+      });
+      
+      cancelNotificationsBtn.addEventListener('click', function() {
+        notificationsSettings.style.display = 'none';
+      });
+      
+      // إدارة الأدمنية
+      adminManagementBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeAllMenus();
+        adminManagement.style.display = 'flex';
+      });
+      
+      closeAdminManagementBtn.addEventListener('click', function() {
+        adminManagement.style.display = 'none';
+      });
+      
+      addAdminBtn.addEventListener('click', function() {
+        adminManagement.style.display = 'none';
+        adminFormModal.style.display = 'flex';
+      });
+      
+      closeAdminFormBtn.addEventListener('click', function() {
+        adminFormModal.style.display = 'none';
+      });
+      
+      saveAdminBtn.addEventListener('click', function() {
+        const username = document.getElementById('admin-username').value;
+        const password = document.getElementById('admin-password').value;
+        const color = document.querySelector('.color-option-admin.selected').dataset.color;
+        
+        if (username && password) {
+          alert(`تم إضافة الأدمن ${username} بنجاح`);
+          adminFormModal.style.display = 'none';
+        } else {
+          alert('الرجاء إدخال اسم المستخدم وكلمة المرور');
+        }
+      });
+      
+      cancelAdminBtn.addEventListener('click', function() {
+        adminFormModal.style.display = 'none';
+      });
+      
+      // اختيار لون الأدمن
+      adminColorOptions.forEach(option => {
+        option.addEventListener('click', function() {
+          adminColorOptions.forEach(opt => opt.classList.remove('selected'));
+          this.classList.add('selected');
+        });
+      });
+      
+      // سجلات الدخول والخروج
+      loginLogBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeAllMenus();
+        logsModal.style.display = 'flex';
+        switchLogTab('login');
+      });
+      
+      banLogBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeAllMenus();
+        logsModal.style.display = 'flex';
+        switchLogTab('ban');
+      });
+      
+      closeLogsBtn.addEventListener('click', function() {
+        logsModal.style.display = 'none';
+      });
+      
+      // تبديل بين تبويبات السجلات
+      logTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          switchLogTab(this.dataset.tab);
+        });
+      });
+      
+      // فك الحظر
+      document.querySelectorAll('.unban-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const row = this.closest('tr');
+          row.remove();
+          alert('تم فك الحظر بنجاح');
+        });
+      });
+      
+      // إغلاق تفاصيل العضو
+      closeDetailsBtn.addEventListener('click', function() {
+        userDetailsModal.style.display = 'none';
+      });
+      
+      // إغلاق القوائم عند النقر خارجها
+      document.addEventListener('click', function() {
+        closeAllMenus();
+      });
+      
+      // منع إغلاق القوائم عند النقر عليها
+      emojiPicker.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      fontSizeMenu.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      colorPicker.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      settingsMenu.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      statusMenu.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      languageMenu.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      cameraModal.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      viewRequestModal.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      imagePicker.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      deleteConfirm.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      filePreview.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      replyPreview.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      languageSettings.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      viewCameraModal.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      privateChat.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      notificationsSettings.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      adminManagement.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      adminFormModal.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      logsModal.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      userDetailsModal.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+      
+      // تهيئة أولية
+      updateRecentEmojis();
+      
+      // محاكاة أن محمد هو المتحدث الحالي
+      setTimeout(() => {
+        speakerName.textContent = 'محمد';
+        speakerTimer.textContent = '04:35';
+        document.querySelectorAll('.user-item').forEach(item => {
+          item.classList.remove('speaking-user');
+          if (item.querySelector('.user-name').textContent.includes('محمد')) {
+            item.classList.add('speaking-user');
+          }
+        });
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
