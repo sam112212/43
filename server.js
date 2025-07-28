@@ -5,8 +5,13 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
+const io = require('socket.io')(server, {
+  cors: {
+    origin: "*", // أو حدد نطاق موقعك فقط لأمان أكثر
+    methods: ["GET", "POST"]
+  }
+});
+
 
 // إعدادات الملفات الثابتة
 app.use(express.static(path.join(__dirname, 'public')));
