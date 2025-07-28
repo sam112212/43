@@ -1212,15 +1212,16 @@ let adminSettings = {
 // تحميل البيانات
 function loadData() {
   try {
-    const data = fs.readFileSync('data.json', 'utf8');
-    const parsed = JSON.parse(data);
-    users = parsed.users || [];
-    messages = parsed.messages || [];
-    adminSettings = parsed.adminSettings || adminSettings;
-  } catch (err) {
-    console.log('No saved data found, starting fresh');
-  }
+  if (fs.existsSync('data.json')) {
+  const data = fs.readFileSync('data.json', 'utf8');
+  const parsed = JSON.parse(data);
+  users = parsed.users || [];
+  messages = parsed.messages || [];
+  adminSettings = parsed.adminSettings || adminSettings;
+} else {
+  console.log('No saved data found, starting fresh');
 }
+
 
 // حفظ البيانات
 function saveData() {
