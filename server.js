@@ -5,8 +5,22 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
+// يجب أن يكون لديك هذا الإعداد
+const io = require('socket.io')(server, {
+  cors: {
+    origin: "*", // أو تحديد النطاق الخاص بك
+    methods: ["GET", "POST"]
+  }
+});
+
+// تأكد من أنك تتعامل مع اتصالات Socket.io بشكل صحيح
+io.on('connection', (socket) => {
+  console.log('New user connected');
+  
+  socket.on('chat message', (msg) => {
+    io.emit('chat message', msg); // إرسال للجميع
+  });
+});
 
 // إعدادات الملفات الثابتة
 app.use(express.static(path.join(__dirname, 'public')));
@@ -115,21 +129,42 @@ io.on('connection', (socket) => {
   console.log('New user connected');
   
   socket.on('login', (userData) => {
- socket.on("get-role-permissions", () => {
-  socket.emit("role-permissions-data", adminSettings.permissions);
+  const user = {
+    id: socket.id,
+    name: userData.name,
+    role: userData.role,
+    avatar: userData.avatar || '😀',
+    status: userData.status || 'متاح'
+  };
+
+  users.push(user);
+
+  socket.emit('login-success', user); // إرسال بيانات الدخول للعميل
+  io.emit('user-list-update', users); // تحديث قائمة المستخدمين للجميع
+  saveData();
 });
 
-socket.on("update-role-permissions", (data) => {
-  adminSettings.permissions = data;
-  saveData();
-  io.emit("role-permissions-data", adminSettings.permissions); // لتحديث الجميع
+
+  users.push(user);
+  socket.emit('login', {
+    username: enteredUsername,
+  isAdmin: false,
+  color: 'green' // أو أي لون من اختيارك
 });
-    
-    users.push(user);
-    socket.emit('login-success', user);
-    io.emit('user-list-update', users);
-    saveData();
+  saveData();
+
+  // نقل الأحداث داخل الاتصال الرئيسي
+  socket.on("get-role-permissions", () => {
+    socket.emit("role-permissions-data", adminSettings.permissions);
   });
+
+  socket.on("update-role-permissions", (data) => {
+    adminSettings.permissions = data;
+    saveData();
+    io.emit("role-permissions-data", adminSettings.permissions);
+  });
+});
+
   
   socket.on('disconnect', () => {
     users = users.filter(user => user.id !== socket.id);
@@ -138,11 +173,17 @@ socket.on("update-role-permissions", (data) => {
   });
   
   socket.on('send-message', (message) => {
-    const newMessage = {
-      id: Date.now().toString(),
-      ...message,
-      timestamp: new Date().toISOString()
-    };
+    const sender = users.find(u => u.id === socket.id);
+const newMessage = {
+  id: Date.now().toString(),
+  text: message.text,
+    time: new Date().toISOString()
+  };
+
+  messages.push(newMessage);
+  io.emit('new-message', newMessage); // بث الرسالة لكل المستخدمين
+  saveData();
+});
     
     messages.push(newMessage);
     io.emit('new-message', newMessage);
