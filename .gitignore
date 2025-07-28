@@ -1,2 +1,7 @@
+"# ignore node and environment files" 
 "node_modules/" 
+".env" 
 "data.json" 
+"*.log" 
+"npm-debug.log*" 
+".DS_Store" 
