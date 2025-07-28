@@ -115,21 +115,30 @@ io.on('connection', (socket) => {
   console.log('New user connected');
   
   socket.on('login', (userData) => {
- socket.on("get-role-permissions", () => {
-  socket.emit("role-permissions-data", adminSettings.permissions);
+  const user = {
+    id: socket.id,
+    username: userData.username,
+    isAdmin: userData.isAdmin || false,
+    color: userData.color || 'default'
+  };
+
+  users.push(user);
+  socket.emit('login-success', user);
+  io.emit('user-list-update', users);
+  saveData();
+
+  // نقل الأحداث داخل الاتصال الرئيسي
+  socket.on("get-role-permissions", () => {
+    socket.emit("role-permissions-data", adminSettings.permissions);
+  });
+
+  socket.on("update-role-permissions", (data) => {
+    adminSettings.permissions = data;
+    saveData();
+    io.emit("role-permissions-data", adminSettings.permissions);
+  });
 });
 
-socket.on("update-role-permissions", (data) => {
-  adminSettings.permissions = data;
-  saveData();
-  io.emit("role-permissions-data", adminSettings.permissions); // لتحديث الجميع
-});
-    
-    users.push(user);
-    socket.emit('login-success', user);
-    io.emit('user-list-update', users);
-    saveData();
-  });
   
   socket.on('disconnect', () => {
     users = users.filter(user => user.id !== socket.id);
